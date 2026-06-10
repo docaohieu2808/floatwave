@@ -1,0 +1,21 @@
+{
+  "name": "youtube-music-miniplayer",
+  "version": "1.0.0",
+  "description": "Frameless always-on-top YouTube music mini-player (AHA Music style)",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --remote-debugging-port=9222",
+    "check": "node --check main.js && node --check main/local-server.js && node --check main/window-manager.js && node --check main/ipc-handlers.js && node --check main/store-manager.js && node --check main/youtube-search.js && node --check preload.cjs && node --check renderer/app.js && node --check renderer/player-controller.js && node --check renderer/queue-manager.js && node --check renderer/search-ui.js && node --check renderer/favorites-ui.js && node --check renderer/error-handler.js && node --check renderer/ui-elements.js && node --check renderer/format-utils.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "electron-store": "^10.0.0",
+    "youtube-sr": "^4.3.12"
+  },
+  "devDependencies": {
+    "electron": "^41.0.0",
+    "puppeteer-core": "^25.1.0"
+  }
+}

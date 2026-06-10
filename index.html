@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' https://www.youtube.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com; img-src https: data:; style-src 'self' 'unsafe-inline'; connect-src 'self'" />
+  <title>YouTube Music Mini-Player</title>
+  <link rel="stylesheet" href="renderer/styles.css" />
+</head>
+<body>
+  <!-- Custom titlebar (frameless window): draggable, buttons are no-drag -->
+  <header id="titlebar">
+    <div id="track-info">
+      <div id="track-title">No track</div>
+      <div id="track-artist">&mdash;</div>
+    </div>
+    <div id="titlebar-buttons">
+      <button id="btn-panel" title="Queue / Favorites">&#9776;</button>
+      <button id="btn-minimize" title="Minimize">&#8211;</button>
+      <button id="btn-close" title="Close">&#10005;</button>
+    </div>
+  </header>
+
+  <div id="search-bar">
+    <input id="search-input" type="text" spellcheck="false"
+           placeholder="Search YouTube or paste a link…" />
+  </div>
+
+  <main id="content">
+    <div id="player-wrap">
+      <div id="player"></div>
+    </div>
+
+    <!-- Fallback overlay for embed-blocked / failed videos -->
+    <div id="player-fallback" class="hidden">
+      <p id="fallback-message"></p>
+      <button id="btn-open-youtube">Open on YouTube</button>
+    </div>
+
+    <!-- Sliding panel: search results / queue / favorites -->
+    <section id="panel" class="hidden">
+      <nav id="panel-tabs">
+        <button class="tab active" data-tab="results">Results</button>
+        <button class="tab" data-tab="queue">Queue</button>
+        <button class="tab" data-tab="favorites">Favorites</button>
+        <button id="btn-panel-close" title="Close panel">&#10005;</button>
+      </nav>
+      <div id="panel-message" class="hidden"></div>
+      <ul id="list-results" class="track-list"></ul>
+      <ul id="list-queue" class="track-list hidden"></ul>
+      <ul id="list-favorites" class="track-list hidden"></ul>
+    </section>
+  </main>
+
+  <footer id="controls">
+    <div id="seek-row">
+      <span id="time-current">0:00</span>
+      <input id="seek" type="range" min="0" max="100" step="0.1" value="0" />
+      <span id="time-total">0:00</span>
+    </div>
+    <div id="buttons-row">
+      <button id="btn-repeat" title="Repeat: off">&#128257;</button>
+      <button id="btn-prev" title="Previous">&#9198;</button>
+      <button id="btn-play" title="Play / Pause">&#9654;</button>
+      <button id="btn-next" title="Next">&#9197;</button>
+      <input id="volume" type="range" min="0" max="100" value="50" title="Volume" />
+      <button id="btn-favorite" title="Favorite">&#9825;</button>
+    </div>
+  </footer>
+
+  <script type="module" src="renderer/app.js"></script>
+</body>
+</html>
