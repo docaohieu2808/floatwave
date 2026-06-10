@@ -7,12 +7,13 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --remote-debugging-port=9222",
-    "check": "node --check main.js && node --check main/local-server.js && node --check main/window-manager.js && node --check main/ipc-handlers.js && node --check main/store-manager.js && node --check main/youtube-search.js && node --check preload.cjs && node --check renderer/app.js && node --check renderer/player-controller.js && node --check renderer/queue-manager.js && node --check renderer/search-ui.js && node --check renderer/favorites-ui.js && node --check renderer/error-handler.js && node --check renderer/ui-elements.js && node --check renderer/format-utils.js"
+    "check": "node --check main.js && node --check main/local-server.js && node --check main/web-mode-manager.js && node --check main/window-manager.js && node --check main/ipc-handlers.js && node --check main/store-manager.js && node --check main/youtube-search.js && node --check preload.cjs && node --check renderer/app.js && node --check renderer/player-controller.js && node --check renderer/queue-manager.js && node --check renderer/search-ui.js && node --check renderer/favorites-ui.js && node --check renderer/error-handler.js && node --check renderer/ui-elements.js && node --check renderer/format-utils.js"
   },
   "license": "MIT",
   "dependencies": {
     "electron-store": "^10.0.0",
-    "youtube-sr": "^4.3.12"
+    "youtube-sr": "^4.3.12",
+    "youtubei.js": "^17.0.1"
   },
   "devDependencies": {
     "electron": "^41.0.0",
