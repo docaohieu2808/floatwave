@@ -5,6 +5,7 @@
 // thickFrame insets). The window + its persist: session stay alive across
 // toggles so Google login and playback position survive.
 import { BrowserWindow, shell } from 'electron';
+import { getStore } from './store-manager.js';
 
 const WEB_SIZE = { width: 960, height: 640 };
 // Google blocks sign-in from Electron-flavored user agents — present plain Chrome
@@ -27,7 +28,7 @@ function getWebWindow(miniWin) {
   webWindow = new BrowserWindow({
     width: WEB_SIZE.width,
     height: WEB_SIZE.height,
-    alwaysOnTop: true,
+    alwaysOnTop: !!getStore().get('alwaysOnTop'), // follows the 📌 preference
     autoHideMenuBar: true,
     backgroundColor: '#0f0f0f',
     show: false,
@@ -69,6 +70,11 @@ function getWebWindow(miniWin) {
   });
 
   return webWindow;
+}
+
+// Pin toggle applies to whichever window exists (mini handled by ipc-handlers)
+export function setWebAlwaysOnTop(flag) {
+  if (webWindow && !webWindow.isDestroyed()) webWindow.setAlwaysOnTop(flag);
 }
 
 export function enterWebMode(miniWin) {

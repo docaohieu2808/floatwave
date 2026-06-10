@@ -2,6 +2,7 @@
 import { BrowserWindow } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getStore } from './store-manager.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -18,7 +19,8 @@ export function createMainWindow(pageUrl = lastPageUrl) {
     resizable: false,
     maximizable: false,
     fullscreenable: false,
-    alwaysOnTop: true,
+    // pin state is a user preference (titlebar 📌), persisted across launches
+    alwaysOnTop: !!getStore().get('alwaysOnTop'),
     // Opaque background — transparent:true flickers on Windows 10 (electron#22691)
     backgroundColor: '#0f0f0f',
     webPreferences: {

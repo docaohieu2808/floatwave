@@ -17,5 +17,6 @@ contextBridge.exposeInMainWorld('api', {
   win: {
     minimize: () => ipcRenderer.invoke('win:minimize'),
     close: () => ipcRenderer.invoke('win:close'),
+    setPin: (pinned) => ipcRenderer.invoke('win:set-pin', pinned),
   },
 });

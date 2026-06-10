@@ -7,7 +7,7 @@ Plain Electron + vanilla JS — no bundler, no framework, no API key.
 
 ## Features
 
-- 340x420 frameless dark window, always on top, draggable titlebar
+- 340x420 frameless dark window, draggable titlebar, optional pin-on-top (📌 toggle, persisted)
 - Search hits the **YouTube Music catalog** (songs with artist/album via InnerTube,
   keyless) — falls back to general YouTube video search; or paste any YouTube link
 - **Web mode (♪):** embedded music.youtube.com in a floating window — sign in with

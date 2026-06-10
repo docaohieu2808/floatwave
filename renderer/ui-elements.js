@@ -6,6 +6,7 @@ const $ = (id) => document.getElementById(id);
 export const els = {
   trackTitle: $('track-title'),
   trackArtist: $('track-artist'),
+  btnPin: $('btn-pin'),
   btnWebMode: $('btn-web-mode'),
   btnPanel: $('btn-panel'),
   btnMinimize: $('btn-minimize'),

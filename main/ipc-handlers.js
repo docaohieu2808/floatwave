@@ -2,7 +2,7 @@
 import { ipcMain, shell } from 'electron';
 import { searchYouTube, findAlternativeVideos, getUpNextTracks } from './youtube-search.js';
 import { getStore, STORE_KEYS } from './store-manager.js';
-import { enterWebMode, exitWebMode } from './web-mode-manager.js';
+import { enterWebMode, exitWebMode, setWebAlwaysOnTop } from './web-mode-manager.js';
 
 // Only allow opening canonical YouTube watch URLs externally
 const YT_WATCH_RE = /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}$/;
@@ -35,6 +35,14 @@ export function registerIpc(win) {
     if (!STORE_KEYS.has(key)) return false;
     getStore().set(key, value);
     return true;
+  });
+
+  ipcMain.handle('win:set-pin', (_event, pinned) => {
+    const flag = !!pinned;
+    if (!win.isDestroyed()) win.setAlwaysOnTop(flag);
+    setWebAlwaysOnTop(flag);
+    getStore().set('alwaysOnTop', flag);
+    return flag;
   });
 
   ipcMain.handle('mode:set', (_event, mode) => {

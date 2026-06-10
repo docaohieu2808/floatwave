@@ -33,10 +33,20 @@ function renderQueueList() {
 }
 
 let webMode = false;
+let pinned = false;
+
+function renderPinButton() {
+  els.btnPin.classList.toggle('active', pinned);
+  els.btnPin.title = pinned ? 'Unpin (stop floating on top)' : 'Pin on top';
+}
 
 function bindTitlebar() {
   els.btnMinimize.addEventListener('click', () => window.api.win.minimize());
   els.btnClose.addEventListener('click', () => window.api.win.close());
+  els.btnPin.addEventListener('click', async () => {
+    pinned = await window.api.win.setPin(!pinned);
+    renderPinButton();
+  });
   const renderWebModeButton = () => {
     els.btnWebMode.classList.toggle('active', webMode);
     els.btnWebMode.title = webMode ? 'Back to mini player' : 'YouTube Music (web)';
@@ -149,12 +159,16 @@ function syncMetadataFromPlayer() {
 }
 
 async function hydrateAndStart() {
-  const [volume, repeat, storedQueue, storedIndex] = await Promise.all([
+  const [volume, repeat, storedQueue, storedIndex, storedPin] = await Promise.all([
     window.api.getStore('volume'),
     window.api.getStore('repeat'),
     window.api.getStore('queue'),
     window.api.getStore('queueIndex'),
+    window.api.getStore('alwaysOnTop'),
   ]);
+
+  pinned = !!storedPin; // window itself was created with this state
+  renderPinButton();
 
   repeatMode = ['off', 'one', 'all'].includes(repeat) ? repeat : 'off';
   setRepeatIcon(repeatMode);

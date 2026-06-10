@@ -8,6 +8,7 @@ const DEFAULTS = {
   volume: 50, // 0-100
   repeat: 'off', // 'off' | 'one' | 'all'
   playlists: [], // [{name, tracks:[{id,title,channel,duration,thumbnail}]}]
+  alwaysOnTop: false, // pin window above others (titlebar 📌 toggle)
 };
 
 // Keys the renderer is allowed to read/write over IPC

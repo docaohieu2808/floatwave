@@ -22,7 +22,7 @@ main process (ESM)               preload (CJS)               renderer (ESM)
 
 **main.js** — Entrypoint wiring only. Boots store, starts loopback server, creates window, registers IPC.
 
-**window-manager.js** — BrowserWindow creation. Fixed 340×420 frameless, always-on-top, no-resize, dark bg (#0f0f0f). Security: contextIsolation=true, sandbox=true, nodeIntegration=false, preload enabled.
+**window-manager.js** — BrowserWindow creation. Fixed 340×420 frameless, no-resize, dark bg (#0f0f0f). Always-on-top is a persisted user preference (store key `alwaysOnTop`, default false) toggled by the titlebar 📌 via `win:set-pin` IPC — applies to both mini and web windows. Security: contextIsolation=true, sandbox=true, nodeIntegration=false, preload enabled.
 
 **ipc-handlers.js** — All IPC routes: `app:ping`, `win:minimize`, `win:close`, `search:youtube`, `store:get`, `store:set`, `app:open-external`. Guards: store keys checked against allowlist (STORE_KEYS Set); external URLs regex-checked (YouTube watch only).
 
