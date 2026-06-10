@@ -1,15 +1,17 @@
-/* Roon-inspired theme: artwork-washed backdrop, glass surfaces, violet
-   accent, thin filled progress bars, light typography. 340x420 mini-player. */
+/* Roon-inspired LIGHT theme: white surfaces, dark text, hairline borders,
+   blue accent, thin filled progress bars, faint artwork wash under frosted
+   glass. 340x420 mini-player. */
 :root {
-  --bg: #0a0a0e;
-  --surface: rgba(18, 16, 26, 0.42);
-  --surface-strong: rgba(13, 12, 19, 0.68);
-  --bg-hover: rgba(255, 255, 255, 0.08);
-  --fg: #f5f4f8;
-  --fg-dim: #a39fb3;
-  --accent: #8a6cff;
-  --danger: #ff5c6c;
-  --range-track: rgba(255, 255, 255, 0.16);
+  --bg: #f4f4f6;
+  --surface: rgba(255, 255, 255, 0.55);
+  --surface-strong: rgba(251, 251, 253, 0.84);
+  --bg-hover: rgba(0, 0, 0, 0.06);
+  --fg: #1b1b20;
+  --fg-dim: #74747e;
+  --accent: #4466e0;
+  --danger: #e5484d;
+  --range-track: rgba(0, 0, 0, 0.14);
+  --hairline: rgba(0, 0, 0, 0.09);
   --titlebar-h: 36px;
   --search-h: 44px;
   --controls-h: 76px;
@@ -30,15 +32,16 @@ html, body {
 
 body { display: flex; flex-direction: column; }
 
-/* Roon signature: current artwork scaled up, blurred and dimmed behind
-   the whole window. Negative inset hides the blur's bright edges. */
+/* Faint artwork wash under the white glass — barely-there color identity.
+   Negative inset hides the blur's bright edges. */
 #artwork-bg {
   position: fixed;
   inset: -48px;
   z-index: -1;
   background-size: cover;
   background-position: center;
-  filter: blur(42px) brightness(0.52) saturate(1.4);
+  filter: blur(48px) brightness(1.15) saturate(1.15);
+  opacity: 0.38;
   transition: background-image 0.5s ease;
 }
 
@@ -124,8 +127,8 @@ button svg, .icon svg {
   height: 30px;
   padding: 0 12px;
   border-radius: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--hairline);
+  background: rgba(255, 255, 255, 0.85);
   color: var(--fg);
   outline: none;
   font-weight: 350;
@@ -178,7 +181,7 @@ button svg, .icon svg {
   align-items: center;
   gap: 2px;
   padding: 6px 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid var(--hairline);
 }
 #panel-tabs .tab {
   padding: 4px 10px;
@@ -208,7 +211,7 @@ button svg, .icon svg {
 }
 .track-list li:hover { background: var(--bg-hover); }
 .track-list li.current {
-  background: rgba(138, 108, 255, 0.14);
+  background: rgba(68, 102, 224, 0.1);
   box-shadow: inset 2px 0 0 var(--accent);
 }
 .track-list img {
@@ -263,10 +266,11 @@ button svg, .icon svg {
   flex-direction: column;
   background: var(--surface-strong);
   backdrop-filter: blur(24px) saturate(1.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--hairline);
   border-radius: 10px;
   padding: 12px;
   gap: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
 }
 #chooser-title { font-weight: 600; letter-spacing: 0.2px; }
 #chooser-options { list-style: none; overflow-y: auto; }
@@ -291,8 +295,8 @@ button svg, .icon svg {
   height: 28px;
   padding: 0 10px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--hairline);
+  background: rgba(255, 255, 255, 0.9);
   color: var(--fg);
   outline: none;
 }
@@ -306,7 +310,7 @@ button svg, .icon svg {
 }
 
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.2); border-radius: 3px; }
 
 /* ---------- Controls ---------- */
 #controls {
@@ -339,10 +343,10 @@ button svg, .icon svg {
   width: 38px;
   height: 38px;
   background: var(--fg);
-  color: #0a0a0e;
+  color: #fff;
   border-radius: 50%;
 }
-#btn-play:hover { background: #fff; color: #000; }
+#btn-play:hover { background: #000; color: #fff; }
 #btn-play svg { width: 20px; height: 20px; }
 #volume { flex: 1 1 auto; min-width: 50px; margin: 0 6px; }
 
@@ -361,6 +365,7 @@ input[type="range"]::-webkit-slider-thumb {
   height: 11px;
   border-radius: 50%;
   background: var(--fg);
+  border: 2px solid #fff;
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.15s ease;
