@@ -37,6 +37,22 @@ export function registerIpc(win) {
     return true;
   });
 
+  // Bypass YouTube's embed loudness normalization: the player caps the
+  // <video> element gain per-track (e.g. 0.85 at "100%") with no opt-out in
+  // embeds. The renderer can't reach the cross-origin iframe, but main can —
+  // force the element gain to match the user's slider exactly.
+  ipcMain.handle('player:set-gain', (_event, value) => {
+    const gain = Math.min(1, Math.max(0, Number(value)));
+    if (Number.isNaN(gain) || win.isDestroyed()) return false;
+    const frame = win.webContents.mainFrame.framesInSubtree.find((f) =>
+      f.url.includes('youtube.com/embed')
+    );
+    frame
+      ?.executeJavaScript(`(() => { const v = document.querySelector('video'); if (v) v.volume = ${gain}; })()`)
+      .catch(() => {});
+    return true;
+  });
+
   ipcMain.handle('win:set-pin', (_event, pinned) => {
     const flag = !!pinned;
     if (!win.isDestroyed()) win.setAlwaysOnTop(flag);

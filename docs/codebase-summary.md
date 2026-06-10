@@ -24,7 +24,7 @@ main process (ESM)               preload (CJS)               renderer (ESM)
 
 **window-manager.js** — BrowserWindow creation. Fixed 340×420 frameless, no-resize, dark bg (#0f0f0f). Always-on-top is a persisted user preference (store key `alwaysOnTop`, default false) toggled by the titlebar 📌 via `win:set-pin` IPC — applies to both mini and web windows. Security: contextIsolation=true, sandbox=true, nodeIntegration=false, preload enabled.
 
-**ipc-handlers.js** — All IPC routes: `app:ping`, `win:minimize`, `win:close`, `search:youtube`, `store:get`, `store:set`, `app:open-external`. Guards: store keys checked against allowlist (STORE_KEYS Set); external URLs regex-checked (YouTube watch only).
+**ipc-handlers.js** — All IPC routes: `app:ping`, `win:minimize`, `win:close`, `win:set-pin`, `search:youtube`, `search:alternative`, `radio:up-next`, `store:get`, `store:set`, `app:open-external`, `mode:set`, `player:set-gain`. Guards: store keys checked against allowlist (STORE_KEYS Set); external URLs regex-checked (YouTube watch only). `player:set-gain` bypasses YouTube's embed loudness normalization (player caps `<video>` gain per-track, e.g. 0.85 at "100%", with no opt-out in embeds) by setting the element gain in the cross-origin embed frame via `framesInSubtree` — renderer re-applies on every PLAYING and volume change.
 
 **youtube-search.js** — `searchYouTube(query)`: primary = YouTube Music catalog via youtubei.js (`yt.music.search(q, {type:'song'})`, lazy Innertube singleton) so results are songs (artist/album), not random videos; fallback = youtube-sr general video search. Returns array of {id, title, channel, duration, thumbnail}. Errors return {ok:false, error}.
 

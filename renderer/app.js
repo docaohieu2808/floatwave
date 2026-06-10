@@ -16,6 +16,12 @@ import {
 import { ICONS } from './icons.js';
 
 const REPEAT_CYCLE = { off: 'one', one: 'all', all: 'off' };
+
+// Embed loudness normalization caps the <video> gain below the user's slider
+// (no opt-out in embeds) — force the element gain to match the slider via main.
+function applyElementGain() {
+  window.api.setGain(Number(els.volume.value) / 100);
+}
 const PLAYER_LOAD_TIMEOUT_MS = 12000;
 
 let repeatMode = 'off';
@@ -121,6 +127,7 @@ function bindControls() {
   els.volume.addEventListener('input', () => {
     const value = Number(els.volume.value);
     player.setVolume(value);
+    applyElementGain();
     clearTimeout(volumePersistTimer);
     volumePersistTimer = setTimeout(() => window.api.setStore('volume', value), 300);
   });
@@ -132,6 +139,7 @@ function bindPlayerEvents() {
     if (state === player.STATE.PLAYING) {
       clearPlayerError();
       syncMetadataFromPlayer();
+      applyElementGain(); // YT re-applies its normalized gain on every load
     }
     if (state === player.STATE.CUED) syncMetadataFromPlayer();
     if (state === player.STATE.ENDED) {
