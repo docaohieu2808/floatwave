@@ -21,12 +21,16 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     if (!ok) failures += 1;
   };
 
-  // Reset queue so the test is deterministic
-  await page.evaluate(() => {
-    window.api.setStore('queue', []);
-    window.api.setStore('queueIndex', -1);
-    window.api.setStore('favorites', []);
+  // Reset queue so the test is deterministic — reload so the renderer's
+  // in-memory queue re-hydrates from the cleared store (otherwise the old
+  // queue re-persists itself on the next mutation)
+  await page.evaluate(async () => {
+    await window.api.setStore('queue', []);
+    await window.api.setStore('queueIndex', -1);
+    await window.api.setStore('favorites', []);
   });
+  await page.reload({ waitUntil: 'load' });
+  await wait(4000); // player re-init
 
   // 1. Paste URL → Enter → track loads and plays
   await page.click('#search-input');

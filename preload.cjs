@@ -5,6 +5,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('api', {
   ping: () => ipcRenderer.invoke('app:ping'),
   search: (query) => ipcRenderer.invoke('search:youtube', query),
+  searchAlternative: (query, excludeIds) =>
+    ipcRenderer.invoke('search:alternative', query, excludeIds),
   getStore: (key) => ipcRenderer.invoke('store:get', key),
   setStore: (key, value) => ipcRenderer.invoke('store:set', key, value),
   openExternal: (url) => ipcRenderer.invoke('app:open-external', url),

@@ -127,6 +127,18 @@ export function onEnded() {
   next(); // handles 'all' wrap; 'off' stops at end
 }
 
+// Swap the current entry to an alternative upload of the same song (used when
+// the original version is embed-blocked). Keeps the song's title/channel
+// identity; the playable id is persisted so next time it just works.
+export function replaceCurrentTrack(alternative) {
+  const track = getCurrent();
+  if (!track || !alternative?.id) return;
+  track.id = alternative.id;
+  if (!track.thumbnail && alternative.thumbnail) track.thumbnail = alternative.thumbnail;
+  if (alternative.duration) track.duration = alternative.duration;
+  loadCurrent();
+}
+
 // Fill in title/channel for tracks added via pasted URL (metadata arrives
 // from the player once the video loads).
 export function updateCurrentMeta(title, channel) {

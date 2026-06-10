@@ -57,7 +57,7 @@ main process (ESM)               preload (CJS)               renderer (ESM)
 
 **favorites-ui.js** — Heart toggle + persisted favorites list via store. Reads/writes store:favorites array.
 
-**error-handler.js** — Maps player error codes (2, 5, 100, 101, 150) to user messages. Guards against infinite skip loops: max 3 consecutive auto-skips. Falls back to manual "Open on YouTube" button.
+**error-handler.js** — Maps player error codes (2, 5, 100, 101, 150) to user messages. For embed-blocked tracks (100/101/150): label "song" (ATV/Topic) versions often block embeds AT PLAY TIME even though oEmbed + WEB_EMBEDDED playability APIs report OK — so the handler first tries alternative uploads of the same song (`search:alternative` IPC → general video search, max 2 tries, failed ids excluded) via `queue-manager.replaceCurrentTrack` which persists the playable id. Only when exhausted does it auto-skip (max 3 consecutive) with "Open on YouTube" fallback. Guards: race check if user changed track mid-search; skip timer cancelled on manual navigation.
 
 **ui-elements.js** — DOM element refs (getElementById). Helpers: setTrackInfo(), setTimes(), renderTrackList(), showPanel(), hidePanel(), etc. Rule: textContent-only (no .innerHTML).
 

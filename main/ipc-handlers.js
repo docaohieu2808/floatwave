@@ -1,6 +1,6 @@
 // All ipcMain handlers — window controls, search, store get/set, open-external.
 import { ipcMain, shell } from 'electron';
-import { searchYouTube } from './youtube-search.js';
+import { searchYouTube, findAlternativeVideos } from './youtube-search.js';
 import { getStore, STORE_KEYS } from './store-manager.js';
 import { enterWebMode, exitWebMode } from './web-mode-manager.js';
 
@@ -19,6 +19,10 @@ export function registerIpc(win) {
   });
 
   ipcMain.handle('search:youtube', (_event, query) => searchYouTube(query));
+
+  ipcMain.handle('search:alternative', (_event, query, excludeIds) =>
+    findAlternativeVideos(query, excludeIds)
+  );
 
   ipcMain.handle('store:get', (_event, key) => {
     if (!STORE_KEYS.has(key)) return undefined;
