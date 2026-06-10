@@ -72,6 +72,27 @@ export function playNow(track) {
   loadCurrent();
 }
 
+// Replace the whole queue (radio mode: clicked song + its up-next list).
+// Does NOT load — caller already started playback of the current track.
+export function setQueue(tracks, startIndex = 0) {
+  queue = (Array.isArray(tracks) ? tracks : []).filter((t) => t?.id).map((t) => ({ ...t }));
+  index = queue.length ? Math.min(Math.max(0, startIndex), queue.length - 1) : -1;
+  changed();
+}
+
+// Bulk append (queue auto-extension), deduplicated by id.
+export function appendTracks(tracks) {
+  const known = new Set(queue.map((t) => t.id));
+  for (const track of Array.isArray(tracks) ? tracks : []) {
+    if (track?.id && !known.has(track.id)) {
+      queue.push({ ...track });
+      known.add(track.id);
+    }
+  }
+  if (index === -1 && queue.length) index = 0;
+  changed();
+}
+
 export function removeAt(removeIndex) {
   if (removeIndex < 0 || removeIndex >= queue.length) return;
   const removedCurrent = removeIndex === index;
@@ -118,13 +139,15 @@ export function prev() {
 }
 
 // Called when the player reports ENDED — advance per repeat mode.
+// Returns false when nothing advanced (end of queue, repeat off) so the
+// caller can extend the queue with radio suggestions and keep playing.
 export function onEnded() {
-  if (!getCurrent()) return;
+  if (!getCurrent()) return false;
   if (repeat === 'one') {
     loadCurrent();
-    return;
+    return true;
   }
-  next(); // handles 'all' wrap; 'off' stops at end
+  return next(); // handles 'all' wrap; 'off' stops at end
 }
 
 // Swap the current entry to an alternative upload of the same song (used when

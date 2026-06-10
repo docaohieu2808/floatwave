@@ -6,6 +6,7 @@ import * as favorites from './favorites-ui.js';
 import {
   initErrorHandler, handlePlayerError, clearPlayerError, cancelPendingSkip,
 } from './error-handler.js';
+import { extendQueueWithRadio } from './radio-autoplay.js';
 import { formatTime } from './format-utils.js';
 import {
   els, setTrackInfo, setPlayIcon, setTimes, setRepeatIcon,
@@ -119,7 +120,10 @@ function bindPlayerEvents() {
       syncMetadataFromPlayer();
     }
     if (state === player.STATE.CUED) syncMetadataFromPlayer();
-    if (state === player.STATE.ENDED) queueManager.onEnded();
+    if (state === player.STATE.ENDED) {
+      // queue exhausted (repeat off) → extend with radio and keep playing
+      if (!queueManager.onEnded()) extendQueueWithRadio();
+    }
   });
 
   player.on('tick', ({ current, duration }) => {

@@ -2,6 +2,7 @@
 import { els, renderTrackList, setPanelMessage, showPanel } from './ui-elements.js';
 import { parseVideoId, isLikelyUrl } from './format-utils.js';
 import * as queueManager from './queue-manager.js';
+import { playWithRadio } from './radio-autoplay.js';
 
 let lastResults = [];
 
@@ -57,7 +58,8 @@ async function runSearch(query) {
 export function renderResults() {
   renderTrackList(els.listResults, lastResults, {
     currentId: queueManager.getCurrent()?.id,
-    onPlay: (track) => queueManager.playNow(track),
+    // playlist behavior: clicking a song plays it AND builds its radio queue
+    onPlay: (track) => playWithRadio(track),
     actionLabel: '+',
     actionTitle: 'Add to queue',
     onAction: (track) => queueManager.add(track),

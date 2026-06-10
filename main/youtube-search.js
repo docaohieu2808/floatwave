@@ -66,6 +66,32 @@ export async function findAlternativeVideos(query, excludeIds = []) {
   }
 }
 
+// YouTube Music "up next" radio for a seed track — powers playlist-like
+// auto-advance: clicking a song builds a related-songs queue, and when the
+// queue runs out the app extends it with the last track's radio.
+export async function getUpNextTracks(videoId) {
+  const id = String(videoId ?? '').trim();
+  if (!/^[A-Za-z0-9_-]{11}$/.test(id)) return { ok: false, error: 'invalid video id' };
+  try {
+    const yt = await getInnertube();
+    const upNext = await yt.music.getUpNext(id);
+    const results = (upNext?.contents ?? [])
+      .map((item) => ({
+        id: item.video_id ?? item.id,
+        title: item.title?.toString?.() ?? 'Untitled',
+        channel:
+          (item.artists ?? []).map((a) => a.name).filter(Boolean).join(', ') ||
+          (item.author?.name ?? ''),
+        duration: item.duration?.text ?? '',
+        thumbnail: item.thumbnail?.[0]?.url ?? item.thumbnail?.contents?.[0]?.url ?? '',
+      }))
+      .filter((t) => t.id && t.id !== id); // seed track comes back first — drop it
+    return { ok: true, results: results.slice(0, 30) };
+  } catch (err) {
+    return { ok: false, error: String(err?.message ?? err) };
+  }
+}
+
 export async function searchYouTube(query) {
   const q = String(query ?? '').trim();
   if (!q) return { ok: true, results: [] };

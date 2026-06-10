@@ -75,8 +75,10 @@ async function tryAlternativeVersion(track) {
   showFallback('This version blocks embedding — trying another upload…', false);
   const response = await window.api.searchAlternative(query, altTriedIds).catch(() => null);
   // user may have picked another track while we were searching — don't
-  // overwrite their choice (report handled so no skip fires either)
-  if (queueManager.getCurrent() !== track) return true;
+  // overwrite their choice (report handled so no skip fires either).
+  // Compare by id: radio-queue replacement recreates track objects but a
+  // genuinely different user pick always means a different id.
+  if (queueManager.getCurrent()?.id !== track.id) return true;
   const candidate = response?.ok ? response.results[0] : null;
   if (!candidate) return false;
   queueManager.replaceCurrentTrack(candidate); // loads + persists the playable id
