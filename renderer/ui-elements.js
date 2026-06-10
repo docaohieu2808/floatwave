@@ -1,5 +1,6 @@
 // Cached DOM refs + small render helpers. No business logic here (DRY DOM access).
 import { formatTime } from './format-utils.js';
+import { ICONS } from './icons.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -43,8 +44,20 @@ export function setTrackInfo(title, artist) {
   els.trackArtist.textContent = artist || '—';
 }
 
+// Fixed icons for buttons whose glyph never changes (called once at boot)
+export function applyStaticIcons() {
+  els.btnPin.innerHTML = ICONS.pin;
+  els.btnWebMode.innerHTML = ICONS.musicNote;
+  els.btnPanel.innerHTML = ICONS.queueList;
+  els.btnMinimize.innerHTML = ICONS.minimize;
+  els.btnClose.innerHTML = ICONS.close;
+  els.btnPanelClose.innerHTML = ICONS.close;
+  els.btnPrev.innerHTML = ICONS.prev;
+  els.btnNext.innerHTML = ICONS.next;
+}
+
 export function setPlayIcon(isPlaying) {
-  els.btnPlay.innerHTML = isPlaying ? '&#10074;&#10074;' : '&#9654;';
+  els.btnPlay.innerHTML = isPlaying ? ICONS.pause : ICONS.play;
 }
 
 export function setTimes(current, duration) {
@@ -54,13 +67,13 @@ export function setTimes(current, duration) {
 }
 
 export function setRepeatIcon(mode) {
-  els.btnRepeat.innerHTML = mode === 'one' ? '&#128258;' : '&#128257;';
+  els.btnRepeat.innerHTML = mode === 'one' ? ICONS.repeatOne : ICONS.repeat;
   els.btnRepeat.classList.toggle('active', mode !== 'off');
   els.btnRepeat.title = `Repeat: ${mode}`;
 }
 
 export function setFavoriteIcon(isFavorite) {
-  els.btnFavorite.innerHTML = isFavorite ? '&#9829;' : '&#9825;';
+  els.btnFavorite.innerHTML = isFavorite ? ICONS.heartFilled : ICONS.heart;
   els.btnFavorite.classList.toggle('active', isFavorite);
 }
 
@@ -95,7 +108,8 @@ export function setPanelMessage(text) {
 }
 
 // Generic track-list renderer used by results / queue / favorites / playlists.
-// opts: { currentId, onPlay(track, index), actions: [{label, title, onClick(track, index)}] }
+// opts: { currentId, onPlay(track, index), actions: [{icon|label, title, onClick(track, index)}] }
+// action.icon = trusted SVG constant from icons.js; label = plain text fallback.
 export function renderTrackList(listEl, tracks, opts = {}) {
   listEl.textContent = '';
   tracks.forEach((track, index) => {
@@ -123,7 +137,8 @@ export function renderTrackList(listEl, tracks, opts = {}) {
     for (const action of opts.actions ?? []) {
       const button = document.createElement('button');
       button.className = 'row-action';
-      button.textContent = action.label;
+      if (action.icon) button.innerHTML = action.icon;
+      else button.textContent = action.label ?? '';
       button.title = action.title ?? '';
       button.addEventListener('click', (event) => {
         event.stopPropagation(); // row click would also fire onPlay

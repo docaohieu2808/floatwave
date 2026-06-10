@@ -10,9 +10,10 @@ import { extendQueueWithRadio } from './radio-autoplay.js';
 import { initPlaylists, renderPlaylistsTab } from './playlists-ui.js';
 import { formatTime } from './format-utils.js';
 import {
-  els, setTrackInfo, setPlayIcon, setTimes, setRepeatIcon,
+  els, setTrackInfo, setPlayIcon, setTimes, setRepeatIcon, applyStaticIcons,
   showPanel, hidePanel, isPanelOpen, setPanelMessage, renderTrackList,
 } from './ui-elements.js';
+import { ICONS } from './icons.js';
 
 const REPEAT_CYCLE = { off: 'one', one: 'all', all: 'off' };
 const PLAYER_LOAD_TIMEOUT_MS = 12000;
@@ -27,7 +28,7 @@ function renderQueueList() {
     // index-based jump — duplicate ids in a radio queue must not mis-target
     onPlay: (_track, index) => queueManager.playAt(index),
     actions: [
-      { label: '✕', title: 'Remove from queue', onClick: (_track, index) => queueManager.removeAt(index) },
+      { icon: ICONS.close, title: 'Remove from queue', onClick: (_track, index) => queueManager.removeAt(index) },
     ],
   });
 }
@@ -227,6 +228,8 @@ async function hydrateAndStart() {
 }
 
 function boot() {
+  applyStaticIcons();
+  setPlayIcon(false);
   bindTitlebar();
   bindPanel();
   bindControls();

@@ -2,6 +2,7 @@
 import { els, renderTrackList, setFavoriteIcon } from './ui-elements.js';
 import * as queueManager from './queue-manager.js';
 import { openAddChooser } from './playlists-ui.js';
+import { ICONS } from './icons.js';
 
 let favorites = []; // [{id,title,channel,thumbnail}]
 
@@ -37,8 +38,8 @@ export function renderFavorites() {
     currentId: queueManager.getCurrent()?.id,
     onPlay: (track) => queueManager.playNow(track),
     actions: [
-      { label: '+', title: 'Add to queue / playlist', onClick: (track) => openAddChooser(track) },
-      { label: '✕', title: 'Remove from favorites', onClick: (track) => toggleFavorite(track) },
+      { icon: ICONS.plus, title: 'Add to queue / playlist', onClick: (track) => openAddChooser(track) },
+      { icon: ICONS.close, title: 'Remove from favorites', onClick: (track) => toggleFavorite(track) },
     ],
   });
 }

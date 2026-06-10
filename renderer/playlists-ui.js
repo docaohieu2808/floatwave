@@ -3,6 +3,7 @@
 // play queue with it (standard player semantics).
 import { els, renderTrackList, showPanel } from './ui-elements.js';
 import * as queueManager from './queue-manager.js';
+import { ICONS } from './icons.js';
 
 let playlists = []; // [{name, tracks:[{id,title,channel,duration,thumbnail}]}]
 let viewingIndex = -1; // -1 = playlist list view, otherwise detail view
@@ -32,19 +33,25 @@ function closeChooser() {
   els.playlistChooser.classList.add('hidden');
 }
 
-function addChooserOption(label, onClick) {
+function addChooserOption(label, onClick, icon = null) {
   const li = document.createElement('li');
-  li.textContent = label;
+  if (icon) {
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'icon';
+    iconSpan.innerHTML = icon; // trusted SVG constant — never user data
+    li.appendChild(iconSpan);
+  }
+  li.appendChild(document.createTextNode(label));
   li.addEventListener('click', onClick);
   els.chooserOptions.appendChild(li);
 }
 
 function renderChooserOptions() {
   els.chooserOptions.textContent = '';
-  addChooserOption('▶ Current queue', () => {
+  addChooserOption('Current queue', () => {
     queueManager.add(chooserTrack);
     closeChooser();
-  });
+  }, ICONS.play);
   playlists.forEach((playlist, index) => {
     addChooserOption(`${playlist.name} (${playlist.tracks.length})`, () => {
       addTrackToPlaylist(index, chooserTrack);
@@ -124,7 +131,7 @@ function renderListView() {
 
     const remove = document.createElement('button');
     remove.className = 'row-action';
-    remove.textContent = '✕';
+    remove.innerHTML = ICONS.close;
     remove.title = 'Delete playlist';
     remove.addEventListener('click', (event) => {
       event.stopPropagation();
@@ -154,7 +161,7 @@ function renderDetailView() {
     },
     actions: [
       {
-        label: '✕',
+        icon: ICONS.close,
         title: 'Remove from playlist',
         onClick: (_track, index) => {
           playlist.tracks.splice(index, 1);
@@ -165,13 +172,17 @@ function renderDetailView() {
     ],
   });
   // header goes on top after renderTrackList cleared the list
-  const back = headerRow(`← ${playlist.name}`, () => {
+  const back = headerRow(playlist.name, () => {
     viewingIndex = -1;
     renderPlaylistsTab();
   });
+  const backIcon = document.createElement('span');
+  backIcon.className = 'icon';
+  backIcon.innerHTML = ICONS.back;
+  back.insertBefore(backIcon, back.firstChild);
   const play = document.createElement('button');
   play.className = 'row-action';
-  play.textContent = '▶';
+  play.innerHTML = ICONS.play;
   play.title = 'Play this playlist';
   play.addEventListener('click', (event) => {
     event.stopPropagation();

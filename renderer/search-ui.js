@@ -4,6 +4,7 @@ import { parseVideoId, isLikelyUrl } from './format-utils.js';
 import * as queueManager from './queue-manager.js';
 import { playWithRadio } from './radio-autoplay.js';
 import { openAddChooser } from './playlists-ui.js';
+import { ICONS } from './icons.js';
 
 let lastResults = [];
 
@@ -62,7 +63,7 @@ export function renderResults() {
     // playlist behavior: clicking a song plays it AND builds its radio queue
     onPlay: (track) => playWithRadio(track),
     actions: [
-      { label: '+', title: 'Add to queue / playlist', onClick: (track) => openAddChooser(track) },
+      { icon: ICONS.plus, title: 'Add to queue / playlist', onClick: (track) => openAddChooser(track) },
     ],
   });
 }

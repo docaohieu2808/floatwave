@@ -57,12 +57,13 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   check('favorite persisted', Array.isArray(favorites) && favorites.some((t) => t.id === TEST_ID),
     `count=${favorites.length}`);
 
-  // 4. Play/pause toggle flips the icon
-  const iconBefore = await page.$eval('#btn-play', (el) => el.textContent);
+  // 4. Play/pause toggle flips the icon (SVG markup — compare innerHTML)
+  const iconBefore = await page.$eval('#btn-play', (el) => el.innerHTML);
   await page.click('#btn-play');
   await wait(1500);
-  const iconAfter = await page.$eval('#btn-play', (el) => el.textContent);
-  check('play/pause toggles', iconBefore !== iconAfter, `${iconBefore} -> ${iconAfter}`);
+  const iconAfter = await page.$eval('#btn-play', (el) => el.innerHTML);
+  check('play/pause toggles', iconBefore !== iconAfter && iconBefore.length > 0,
+    `icon changed: ${iconBefore !== iconAfter}`);
 
   // 5. Panel opens with queue list rendered
   await page.click('#btn-panel');
