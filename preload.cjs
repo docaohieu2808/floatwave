@@ -8,6 +8,9 @@ contextBridge.exposeInMainWorld('api', {
   getStore: (key) => ipcRenderer.invoke('store:get', key),
   setStore: (key, value) => ipcRenderer.invoke('store:set', key, value),
   openExternal: (url) => ipcRenderer.invoke('app:open-external', url),
+  setMode: (mode) => ipcRenderer.invoke('mode:set', mode),
+  // fired when web mode ends from the main side (web window's own X button)
+  onModeExited: (callback) => ipcRenderer.on('mode:exited', () => callback()),
   win: {
     minimize: () => ipcRenderer.invoke('win:minimize'),
     close: () => ipcRenderer.invoke('win:close'),

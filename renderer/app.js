@@ -29,9 +29,25 @@ function renderQueueList() {
   });
 }
 
+let webMode = false;
+
 function bindTitlebar() {
   els.btnMinimize.addEventListener('click', () => window.api.win.minimize());
   els.btnClose.addEventListener('click', () => window.api.win.close());
+  const renderWebModeButton = () => {
+    els.btnWebMode.classList.toggle('active', webMode);
+    els.btnWebMode.title = webMode ? 'Back to mini player' : 'YouTube Music (web)';
+  };
+  els.btnWebMode.addEventListener('click', async () => {
+    webMode = !webMode;
+    if (webMode) player.pause(); // two players must never sound at once
+    await window.api.setMode(webMode ? 'web' : 'mini');
+    renderWebModeButton();
+  });
+  window.api.onModeExited(() => {
+    webMode = false;
+    renderWebModeButton();
+  });
   els.btnPanel.addEventListener('click', () => {
     if (isPanelOpen()) hidePanel();
     else {

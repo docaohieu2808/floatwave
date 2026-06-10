@@ -2,6 +2,7 @@
 import { ipcMain, shell } from 'electron';
 import { searchYouTube } from './youtube-search.js';
 import { getStore, STORE_KEYS } from './store-manager.js';
+import { enterWebMode, exitWebMode } from './web-mode-manager.js';
 
 // Only allow opening canonical YouTube watch URLs externally
 const YT_WATCH_RE = /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}$/;
@@ -27,6 +28,13 @@ export function registerIpc(win) {
   ipcMain.handle('store:set', (_event, key, value) => {
     if (!STORE_KEYS.has(key)) return false;
     getStore().set(key, value);
+    return true;
+  });
+
+  ipcMain.handle('mode:set', (_event, mode) => {
+    if (mode === 'web') enterWebMode(win);
+    else if (mode === 'mini') exitWebMode(win);
+    else return false;
     return true;
   });
 
