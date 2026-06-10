@@ -12,6 +12,7 @@ import { formatTime } from './format-utils.js';
 import {
   els, setTrackInfo, setPlayIcon, setTimes, setRepeatIcon, applyStaticIcons,
   showPanel, hidePanel, isPanelOpen, setPanelMessage, renderTrackList,
+  setArtworkBackground, setRangeFill,
 } from './ui-elements.js';
 import { ICONS } from './icons.js';
 
@@ -21,6 +22,14 @@ const REPEAT_CYCLE = { off: 'one', one: 'all', all: 'off' };
 // (no opt-out in embeds) — force the element gain to match the slider via main.
 function applyElementGain() {
   window.api.setGain(Number(els.volume.value) / 100);
+}
+
+// Roon-style backdrop follows the current track's artwork; thumbnail is
+// always derivable from the video id even for URL-pasted tracks.
+function updateArtwork(track) {
+  setArtworkBackground(
+    track ? track.thumbnail || `https://i.ytimg.com/vi/${track.id}/hqdefault.jpg` : null
+  );
 }
 const PLAYER_LOAD_TIMEOUT_MS = 12000;
 
@@ -115,7 +124,9 @@ function bindControls() {
   els.seek.addEventListener('input', () => {
     isDraggingSeek = true;
     const { duration } = player.getTimes();
-    els.timeCurrent.textContent = formatTime((Number(els.seek.value) / 100) * duration);
+    const percent = Number(els.seek.value);
+    els.timeCurrent.textContent = formatTime((percent / 100) * duration);
+    setRangeFill(els.seek, percent);
   });
   els.seek.addEventListener('change', () => {
     const { duration } = player.getTimes();
@@ -127,6 +138,7 @@ function bindControls() {
   els.volume.addEventListener('input', () => {
     const value = Number(els.volume.value);
     player.setVolume(value);
+    setRangeFill(els.volume, value);
     applyElementGain();
     clearTimeout(volumePersistTimer);
     volumePersistTimer = setTimeout(() => window.api.setStore('volume', value), 300);
@@ -184,6 +196,8 @@ async function hydrateAndStart() {
 
   const volumeValue = Number.isFinite(volume) ? Math.min(100, Math.max(0, volume)) : 50;
   els.volume.value = String(volumeValue);
+  setRangeFill(els.volume, volumeValue);
+  setRangeFill(els.seek, 0);
 
   queueManager.init({
     initialQueue: storedQueue,
@@ -201,6 +215,7 @@ async function hydrateAndStart() {
       cancelPendingSkip(); // user-picked track must not be auto-skipped over
       setTrackInfo(track?.title, track?.channel); // null = queue emptied
       favorites.refreshFavoriteIcon(track);
+      updateArtwork(track);
     },
   });
   queueManager.setRepeat(repeatMode);
@@ -221,6 +236,7 @@ async function hydrateAndStart() {
       player.load(current.id, { autoplay: false });
       setTrackInfo(current.title, current.channel);
       favorites.refreshFavoriteIcon(current);
+      updateArtwork(current);
     }
   };
   await Promise.race([

@@ -5,6 +5,7 @@ import { ICONS } from './icons.js';
 const $ = (id) => document.getElementById(id);
 
 export const els = {
+  artworkBg: $('artwork-bg'),
   trackTitle: $('track-title'),
   trackArtist: $('track-artist'),
   btnPin: $('btn-pin'),
@@ -44,6 +45,18 @@ export function setTrackInfo(title, artist) {
   els.trackArtist.textContent = artist || '—';
 }
 
+// Roon-style backdrop: the whole window is washed with the current artwork
+export function setArtworkBackground(url) {
+  els.artworkBg.style.backgroundImage = url ? `url("${url}")` : 'none';
+}
+
+// Filled progress portion for range inputs (Roon-style thin filled bar)
+export function setRangeFill(rangeEl, percent) {
+  const clamped = Math.min(100, Math.max(0, percent));
+  rangeEl.style.background =
+    `linear-gradient(to right, var(--accent) ${clamped}%, var(--range-track) ${clamped}%)`;
+}
+
 // Fixed icons for buttons whose glyph never changes (called once at boot)
 export function applyStaticIcons() {
   els.btnPin.innerHTML = ICONS.pin;
@@ -63,7 +76,9 @@ export function setPlayIcon(isPlaying) {
 export function setTimes(current, duration) {
   els.timeCurrent.textContent = formatTime(current);
   els.timeTotal.textContent = formatTime(duration);
-  els.seek.value = duration > 0 ? String((current / duration) * 100) : '0';
+  const percent = duration > 0 ? (current / duration) * 100 : 0;
+  els.seek.value = String(percent);
+  setRangeFill(els.seek, percent);
 }
 
 export function setRepeatIcon(mode) {
