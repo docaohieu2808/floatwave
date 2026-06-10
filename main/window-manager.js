@@ -22,7 +22,7 @@ export function createMainWindow(pageUrl = lastPageUrl) {
     // pin state is a user preference (titlebar 📌), persisted across launches
     alwaysOnTop: !!getStore().get('alwaysOnTop'),
     // Opaque background — transparent:true flickers on Windows 10 (electron#22691)
-    backgroundColor: '#f4f4f6', // matches the light theme, no dark flash
+    backgroundColor: '#ffffff', // matches the flat white Roon-light theme
     webPreferences: {
       preload: path.join(ROOT, 'preload.cjs'),
       contextIsolation: true,

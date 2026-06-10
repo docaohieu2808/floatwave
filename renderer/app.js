@@ -8,6 +8,7 @@ import {
 } from './error-handler.js';
 import { extendQueueWithRadio } from './radio-autoplay.js';
 import { initPlaylists, renderPlaylistsTab } from './playlists-ui.js';
+import { applyWaveformMask } from './waveform.js';
 import { formatTime } from './format-utils.js';
 import {
   els, setTrackInfo, setPlayIcon, setTimes, setRepeatIcon, applyStaticIcons,
@@ -24,12 +25,13 @@ function applyElementGain() {
   window.api.setGain(Number(els.volume.value) / 100);
 }
 
-// Roon-style backdrop follows the current track's artwork; thumbnail is
-// always derivable from the video id even for URL-pasted tracks.
+// Per-track visuals: artwork backdrop (hidden in the flat Roon-light theme,
+// kept for a future dark theme) + the seek bar's per-track waveform shape.
 function updateArtwork(track) {
   setArtworkBackground(
     track ? track.thumbnail || `https://i.ytimg.com/vi/${track.id}/hqdefault.jpg` : null
   );
+  applyWaveformMask(els.seek, track?.id);
 }
 const PLAYER_LOAD_TIMEOUT_MS = 12000;
 
@@ -198,6 +200,7 @@ async function hydrateAndStart() {
   els.volume.value = String(volumeValue);
   setRangeFill(els.volume, volumeValue);
   setRangeFill(els.seek, 0);
+  applyWaveformMask(els.seek, queueManager.getCurrent()?.id); // empty state still shows a waveform
 
   queueManager.init({
     initialQueue: storedQueue,

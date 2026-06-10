@@ -50,11 +50,12 @@ export function setArtworkBackground(url) {
   els.artworkBg.style.backgroundImage = url ? `url("${url}")` : 'none';
 }
 
-// Filled progress portion for range inputs (Roon-style thin filled bar)
+// Filled progress portion for range inputs. Fill color comes from the
+// element's --fill-color (seek = dark waveform fill, volume = accent).
 export function setRangeFill(rangeEl, percent) {
   const clamped = Math.min(100, Math.max(0, percent));
   rangeEl.style.background =
-    `linear-gradient(to right, var(--accent) ${clamped}%, var(--range-track) ${clamped}%)`;
+    `linear-gradient(to right, var(--fill-color, var(--accent)) ${clamped}%, var(--range-track) ${clamped}%)`;
 }
 
 // Fixed icons for buttons whose glyph never changes (called once at boot)
