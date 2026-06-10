@@ -1,6 +1,7 @@
 // Favorites: toggle current track, persisted list, playable from panel.
 import { els, renderTrackList, setFavoriteIcon } from './ui-elements.js';
 import * as queueManager from './queue-manager.js';
+import { openAddChooser } from './playlists-ui.js';
 
 let favorites = []; // [{id,title,channel,thumbnail}]
 
@@ -35,8 +36,9 @@ export function renderFavorites() {
   renderTrackList(els.listFavorites, favorites, {
     currentId: queueManager.getCurrent()?.id,
     onPlay: (track) => queueManager.playNow(track),
-    actionLabel: '✕',
-    actionTitle: 'Remove from favorites',
-    onAction: (track) => toggleFavorite(track),
+    actions: [
+      { label: '+', title: 'Add to queue / playlist', onClick: (track) => openAddChooser(track) },
+      { label: '✕', title: 'Remove from favorites', onClick: (track) => toggleFavorite(track) },
+    ],
   });
 }

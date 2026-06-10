@@ -44,13 +44,27 @@
         <button class="tab active" data-tab="results">Results</button>
         <button class="tab" data-tab="queue">Queue</button>
         <button class="tab" data-tab="favorites">Favorites</button>
+        <button class="tab" data-tab="playlists">Playlists</button>
         <button id="btn-panel-close" title="Close panel">&#10005;</button>
       </nav>
       <div id="panel-message" class="hidden"></div>
       <ul id="list-results" class="track-list"></ul>
       <ul id="list-queue" class="track-list hidden"></ul>
       <ul id="list-favorites" class="track-list hidden"></ul>
+      <ul id="list-playlists" class="track-list hidden"></ul>
     </section>
+
+    <!-- "Add to…" chooser: current queue / a playlist / create new playlist -->
+    <div id="playlist-chooser" class="hidden">
+      <div id="chooser-box">
+        <div id="chooser-title">Add to&hellip;</div>
+        <ul id="chooser-options"></ul>
+        <div id="chooser-new">
+          <input id="chooser-new-name" type="text" placeholder="New playlist name&hellip;" spellcheck="false" />
+          <button id="chooser-create">Create</button>
+        </div>
+      </div>
+    </div>
   </main>
 
   <footer id="controls">

@@ -7,6 +7,7 @@ import {
   initErrorHandler, handlePlayerError, clearPlayerError, cancelPendingSkip,
 } from './error-handler.js';
 import { extendQueueWithRadio } from './radio-autoplay.js';
+import { initPlaylists, renderPlaylistsTab } from './playlists-ui.js';
 import { formatTime } from './format-utils.js';
 import {
   els, setTrackInfo, setPlayIcon, setTimes, setRepeatIcon,
@@ -23,10 +24,11 @@ let volumePersistTimer = null;
 function renderQueueList() {
   renderTrackList(els.listQueue, queueManager.getQueue(), {
     currentId: queueManager.getCurrent()?.id,
-    onPlay: (track) => queueManager.playNow(track),
-    actionLabel: '✕',
-    actionTitle: 'Remove from queue',
-    onAction: (_track, index) => queueManager.removeAt(index),
+    // index-based jump — duplicate ids in a radio queue must not mis-target
+    onPlay: (_track, index) => queueManager.playAt(index),
+    actions: [
+      { label: '✕', title: 'Remove from queue', onClick: (_track, index) => queueManager.removeAt(index) },
+    ],
   });
 }
 
@@ -66,6 +68,7 @@ function bindPanel() {
     if (tab !== 'results') setPanelMessage(null);
     if (tab === 'queue') renderQueueList();
     if (tab === 'favorites') favorites.renderFavorites();
+    if (tab === 'playlists') renderPlaylistsTab();
     showPanel(tab);
   });
   els.btnPanelClose.addEventListener('click', hidePanel);
@@ -179,6 +182,7 @@ async function hydrateAndStart() {
   });
   queueManager.setRepeat(repeatMode);
   await favorites.initFavorites();
+  await initPlaylists();
 
   // Player init needs network (YouTube IFrame API). Show a notice if slow,
   // but COMPLETE init whenever it does resolve — a late ready must not leave

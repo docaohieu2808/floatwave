@@ -21,6 +21,11 @@ export const els = {
   listResults: $('list-results'),
   listQueue: $('list-queue'),
   listFavorites: $('list-favorites'),
+  listPlaylists: $('list-playlists'),
+  playlistChooser: $('playlist-chooser'),
+  chooserOptions: $('chooser-options'),
+  chooserNewName: $('chooser-new-name'),
+  chooserCreate: $('chooser-create'),
   timeCurrent: $('time-current'),
   timeTotal: $('time-total'),
   seek: $('seek'),
@@ -58,7 +63,12 @@ export function setFavoriteIcon(isFavorite) {
   els.btnFavorite.classList.toggle('active', isFavorite);
 }
 
-const TAB_LISTS = { results: 'listResults', queue: 'listQueue', favorites: 'listFavorites' };
+const TAB_LISTS = {
+  results: 'listResults',
+  queue: 'listQueue',
+  favorites: 'listFavorites',
+  playlists: 'listPlaylists',
+};
 
 export function showPanel(tab) {
   els.panel.classList.remove('hidden');
@@ -83,8 +93,8 @@ export function setPanelMessage(text) {
   els.panelMessage.classList.toggle('hidden', !text);
 }
 
-// Generic track-list renderer used by results / queue / favorites.
-// opts: { currentId, onPlay(track, index), actionLabel, actionTitle, onAction(track, index) }
+// Generic track-list renderer used by results / queue / favorites / playlists.
+// opts: { currentId, onPlay(track, index), actions: [{label, title, onClick(track, index)}] }
 export function renderTrackList(listEl, tracks, opts = {}) {
   listEl.textContent = '';
   tracks.forEach((track, index) => {
@@ -109,16 +119,16 @@ export function renderTrackList(listEl, tracks, opts = {}) {
     meta.append(title, channel);
     li.appendChild(meta);
 
-    if (opts.actionLabel && opts.onAction) {
-      const action = document.createElement('button');
-      action.className = 'row-action';
-      action.textContent = opts.actionLabel;
-      action.title = opts.actionTitle ?? '';
-      action.addEventListener('click', (event) => {
+    for (const action of opts.actions ?? []) {
+      const button = document.createElement('button');
+      button.className = 'row-action';
+      button.textContent = action.label;
+      button.title = action.title ?? '';
+      button.addEventListener('click', (event) => {
         event.stopPropagation(); // row click would also fire onPlay
-        opts.onAction(track, index);
+        action.onClick(track, index);
       });
-      li.appendChild(action);
+      li.appendChild(button);
     }
 
     if (opts.onPlay) li.addEventListener('click', () => opts.onPlay(track, index));

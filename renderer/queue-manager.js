@@ -60,6 +60,14 @@ export function add(track) {
   changed();
 }
 
+// Jump to a specific queue position (panel click, playlist play). Index-based
+// so duplicate ids in the queue can't send playback to the wrong row.
+export function playAt(targetIndex) {
+  if (targetIndex < 0 || targetIndex >= queue.length) return;
+  index = targetIndex;
+  loadCurrent();
+}
+
 export function playNow(track) {
   if (!track?.id) return;
   const existing = queue.findIndex((t) => t.id === track.id);
