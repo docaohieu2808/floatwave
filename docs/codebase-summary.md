@@ -10,9 +10,9 @@ main process (ESM)               preload (CJS)               renderer (ESM)
 ├── window-manager.js            │   └── window.api.*        ├── player-controller.js (iframe)
 ├── ipc-handlers.js              └── allowlisted IPC         ├── queue-manager.js
 ├── youtube-search.js                                        ├── search-ui.js
-├── local-server.js                                          ├── favorites-ui.js
-└── store-manager.js                                         ├── error-handler.js
-                                                             ├── ui-elements.js
+├── web-mode-manager.js                                      ├── favorites-ui.js
+├── local-server.js                                          ├── error-handler.js
+└── store-manager.js                                         ├── ui-elements.js
                                                              └── format-utils.js
 ```
 
@@ -26,7 +26,9 @@ main process (ESM)               preload (CJS)               renderer (ESM)
 
 **ipc-handlers.js** — All IPC routes: `app:ping`, `win:minimize`, `win:close`, `search:youtube`, `store:get`, `store:set`, `app:open-external`. Guards: store keys checked against allowlist (STORE_KEYS Set); external URLs regex-checked (YouTube watch only).
 
-**youtube-search.js** — `searchYouTube(query)` calls youtube-sr v4.3.12 (keyless search). Returns array of {id, title, channel, duration, thumbnail}. Errors return {error: message}.
+**youtube-search.js** — `searchYouTube(query)`: primary = YouTube Music catalog via youtubei.js (`yt.music.search(q, {type:'song'})`, lazy Innertube singleton) so results are songs (artist/album), not random videos; fallback = youtube-sr general video search. Returns array of {id, title, channel, duration, thumbnail}. Errors return {ok:false, error}.
+
+**web-mode-manager.js** — Embedded music.youtube.com mode: a SECOND always-on-top BrowserWindow (native frame, 960×640) toggled show/hide against the mini window via IPC `mode:set`. Separate window avoids Windows frameless setSize/resizable quirks. Session `persist:ytmusic` keeps Google login across restarts; Chrome UA spoof (Google blocks Electron UA sign-in); permission requests denied; popups → shell.openExternal. Closing the web window (X) hides it, pauses its `<video>`, reshows mini, and emits `mode:exited` so the renderer resyncs the ♪ button.
 
 **store-manager.js** — Thin electron-store v10 (ESM, main-only) wrapper. Keys: volume, repeat, queue, queueIndex, favorites. On error, returns empty defaults.
 
@@ -39,6 +41,8 @@ main process (ESM)               preload (CJS)               renderer (ESM)
 - `window.api.getStore(key)` → store:get
 - `window.api.setStore(key, value)` → store:set
 - `window.api.openExternal(url)` → app:open-external (YouTube-only regex check)
+- `window.api.setMode('web'|'mini')` → mode:set (web-mode-manager toggle)
+- `window.api.onModeExited(cb)` ← mode:exited push event (♪ button resync)
 - `window.api.win.minimize()`, `window.api.win.close()` → window IPC
 
 ### Renderer (ESM + vanilla JS)

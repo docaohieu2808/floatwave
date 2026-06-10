@@ -8,7 +8,10 @@ Plain Electron + vanilla JS — no bundler, no framework, no API key.
 ## Features
 
 - 340x420 frameless dark window, always on top, draggable titlebar
-- Search YouTube by keyword (keyless, via `youtube-sr`) or paste any YouTube link
+- Search hits the **YouTube Music catalog** (songs with artist/album via InnerTube,
+  keyless) — falls back to general YouTube video search; or paste any YouTube link
+- **Web mode (♪):** embedded music.youtube.com in a floating window — sign in with
+  your Google account, personal playlists/recommendations, login persists
 - Play queue: add (`+`), remove, prev/next, auto-advance on track end
 - Repeat modes: off / one / all
 - Favorites with one-click toggle (♥)
