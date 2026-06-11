@@ -30,18 +30,10 @@ export function registerIpc(win) {
   });
 
   ipcMain.handle('win:minimize', () => {
-    if (win.isDestroyed()) return;
-    // An always-on-top (topmost) window on Windows minimizes toward the tray
-    // notification area instead of the taskbar. Drop the topmost flag while
-    // minimized, then restore it (if still the user's preference) on un-minimize
-    // so it collapses to the taskbar like a normal app.
-    if (win.isAlwaysOnTop()) {
-      win.setAlwaysOnTop(false);
-      win.once('restore', () => {
-        if (!win.isDestroyed() && getStore().get('alwaysOnTop')) win.setAlwaysOnTop(true);
-      });
-    }
-    win.minimize();
+    // Minimize-to-tray: hide the window (removes its taskbar button) and let the
+    // tray icon (main/tray-manager.js) bring it back. hide() keeps the window's
+    // pin/alwaysOnTop + size, so show() restores it exactly.
+    if (!win.isDestroyed()) win.hide();
   });
 
   ipcMain.handle('win:close', () => {

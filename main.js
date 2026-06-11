@@ -4,6 +4,7 @@ import { createMainWindow } from './main/window-manager.js';
 import { registerIpc } from './main/ipc-handlers.js';
 import { registerGlobalShortcuts } from './main/global-shortcuts.js';
 import { initAdBlocker } from './main/ad-blocker.js';
+import { initTray } from './main/tray-manager.js';
 import { getStore } from './main/store-manager.js';
 import { startLocalServer } from './main/local-server.js';
 
@@ -21,9 +22,11 @@ app.whenReady().then(async () => {
   const win = createMainWindow(pageUrl);
   registerIpc(win);
   registerGlobalShortcuts(win);
+  initTray(win); // minimize hides to the tray; tray icon restores
 });
 
 app.on('window-all-closed', () => {
-  // Windows target: closing the mini-player quits the app (no tray in v1)
+  // The mini-player's X button quits. (Minimize HIDES to tray — that doesn't
+  // close the window, so this won't fire and the app keeps running in the tray.)
   app.quit();
 });
