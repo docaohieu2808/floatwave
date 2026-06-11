@@ -13,8 +13,15 @@ export const els = {
   btnPanel: $('btn-panel'),
   btnMinimize: $('btn-minimize'),
   btnClose: $('btn-close'),
+  btnFocusMode: $('btn-focus-mode'),
+  btnSearchMode: $('btn-search-mode'),
   searchInput: $('search-input'),
+  searchHistory: $('search-history'),
   fallback: $('player-fallback'),
+  brandSplash: $('brand-splash'),
+  webArt: $('web-art'),
+  webArtImg: $('web-art-img'),
+  webArtBg: $('web-art-bg'),
   fallbackMessage: $('fallback-message'),
   btnOpenYoutube: $('btn-open-youtube'),
   panel: $('panel'),
@@ -38,6 +45,7 @@ export const els = {
   btnNext: $('btn-next'),
   volume: $('volume'),
   btnFavorite: $('btn-favorite'),
+  btnDislike: $('btn-dislike'),
 };
 
 export function setTrackInfo(title, artist) {
@@ -61,6 +69,7 @@ export function setRangeFill(rangeEl, percent) {
 // Fixed icons for buttons whose glyph never changes (called once at boot)
 export function applyStaticIcons() {
   els.btnPin.innerHTML = ICONS.pin;
+  els.btnFocusMode.innerHTML = ICONS.collapse;
   els.btnWebMode.innerHTML = ICONS.musicNote;
   els.btnPanel.innerHTML = ICONS.queueList;
   els.btnMinimize.innerHTML = ICONS.minimize;
@@ -68,6 +77,10 @@ export function applyStaticIcons() {
   els.btnPanelClose.innerHTML = ICONS.close;
   els.btnPrev.innerHTML = ICONS.prev;
   els.btnNext.innerHTML = ICONS.next;
+  els.btnDislike.innerHTML = ICONS.thumbDown;
+  // empty-state default — without this the heart only appears once a track
+  // loads, leaving a blank circle on a fresh/cleared queue
+  els.btnFavorite.innerHTML = ICONS.heart;
 }
 
 export function setPlayIcon(isPlaying) {
@@ -91,6 +104,13 @@ export function setRepeatIcon(mode) {
 export function setFavoriteIcon(isFavorite) {
   els.btnFavorite.innerHTML = isFavorite ? ICONS.heartFilled : ICONS.heart;
   els.btnFavorite.classList.toggle('active', isFavorite);
+}
+
+export function setDislikeIcon(isDisliked) {
+  els.btnDislike.classList.toggle('active', isDisliked);
+  els.btnDislike.title = isDisliked
+    ? 'Disliked — excluded from suggestions (click to undo)'
+    : 'Dislike: skip & stop suggesting this';
 }
 
 const TAB_LISTS = {
@@ -124,13 +144,37 @@ export function setPanelMessage(text) {
 }
 
 // Generic track-list renderer used by results / queue / favorites / playlists.
-// opts: { currentId, onPlay(track, index), actions: [{icon|label, title, onClick(track, index)}] }
+// opts: { currentId, onPlay(track, index), actions: [{icon|label, title, onClick(track, index)}],
+//         onReorder(fromIndex, toIndex) } — onReorder enables drag & drop (queue tab).
 // action.icon = trusted SVG constant from icons.js; label = plain text fallback.
 export function renderTrackList(listEl, tracks, opts = {}) {
   listEl.textContent = '';
+  let dragFromIndex = -1; // shared across this render's rows
   tracks.forEach((track, index) => {
     const li = document.createElement('li');
     if (opts.currentId && track.id === opts.currentId) li.classList.add('current');
+
+    if (opts.onReorder) {
+      li.draggable = true;
+      li.addEventListener('dragstart', (event) => {
+        dragFromIndex = index;
+        li.classList.add('dragging');
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', String(index)); // required to start a drag
+      });
+      li.addEventListener('dragend', () => li.classList.remove('dragging'));
+      li.addEventListener('dragover', (event) => {
+        event.preventDefault(); // makes the row a valid drop target
+        if (dragFromIndex >= 0 && dragFromIndex !== index) li.classList.add('drag-over');
+      });
+      li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
+      li.addEventListener('drop', (event) => {
+        event.preventDefault();
+        li.classList.remove('drag-over');
+        if (dragFromIndex >= 0 && dragFromIndex !== index) opts.onReorder(dragFromIndex, index);
+        dragFromIndex = -1;
+      });
+    }
 
     if (track.thumbnail) {
       const img = document.createElement('img');

@@ -1,14 +1,26 @@
-// Maps YouTube player error codes to fallback UI + recovery. For embed-blocked
-// songs (label ATV tracks error at PLAY time even when playability APIs say
-// OK) it first tries alternative uploads of the same song (MV/lyric video)
-// before giving up and auto-skipping. Guards against infinite loops both ways.
+// Maps YouTube player error codes to fallback UI + recovery.
+//
+// Embed-disabled songs (codes 101/150 — label/ATV tracks error at PLAY time
+// even when playability APIs say OK) play the EXACT same video through the
+// hidden YouTube Music backend: only *embedding* is blocked, youtube.com always
+// plays it. We deliberately do NOT hunt for other uploads of the song — a
+// general search can substitute a cover / tutorial / compilation (wrong song),
+// and backend B already plays the real track, so there's nothing to gain.
+//
+// Genuinely dead videos (2 invalid, 5 player error, 100 removed/private) can't
+// be rescued by the web backend either, so those auto-skip (capped).
 import { els } from './ui-elements.js';
 import * as queueManager from './queue-manager.js';
+import { forceWeb } from './playback-router.js';
 
 const MAX_CONSECUTIVE_SKIPS = 3;
-const MAX_ALTERNATIVE_TRIES = 2;
 const SKIP_DELAY_MS = 1500;
-const BLOCKED_CODES = new Set([100, 101, 150]);
+// A failure this long after the previous one starts a FRESH episode: within a
+// skip storm errors arrive every ~1.5–4s, so a longer gap means the user moved
+// on (re-picked a song, came back later). Must exceed intra-storm spacing.
+const EPISODE_GAP_MS = 10000;
+// Embedding disabled by the owner → playable on youtube.com via backend B.
+const EMBED_BLOCKED_CODES = new Set([101, 150]);
 
 const MESSAGES = {
   2: 'Invalid video reference',
@@ -21,10 +33,14 @@ const MESSAGES = {
 let consecutiveSkips = 0;
 let failedVideoId = null;
 let skipTimer = null;
-// alternative-version attempt state, keyed by the song's title identity
-let altSongKey = null;
-let altTriedIds = [];
-let altAttempts = 0;
+let lastFailureAt = 0; // timestamp of the previous error, for episode detection
+
+// The skip counter bounds a SINGLE stuck episode; if it leaks into the next one
+// (e.g. the user re-picks after an earlier give-up) the app would refuse to even
+// try. Reset on success (clearPlayerError) and at the start of a fresh episode.
+function resetGuards() {
+  consecutiveSkips = 0;
+}
 
 export function initErrorHandler() {
   els.btnOpenYoutube.addEventListener('click', () => {
@@ -53,59 +69,32 @@ function scheduleSkip(message) {
   }, SKIP_DELAY_MS);
 }
 
-// A track has a searchable identity only if it carries a real title
-// (URL-pasted tracks that never loaded still have the raw 11-char id).
-function songQueryOf(track) {
-  if (!track?.title || track.title === track.id) return null;
-  return [track.title, track.channel].filter(Boolean).join(' ');
-}
-
-async function tryAlternativeVersion(track) {
-  const query = songQueryOf(track);
-  if (!query) return false;
-  if (altSongKey !== query) {
-    altSongKey = query;
-    altTriedIds = [];
-    altAttempts = 0;
-  }
-  if (altAttempts >= MAX_ALTERNATIVE_TRIES) return false;
-  altTriedIds.push(track.id);
-  altAttempts += 1;
-
-  showFallback('This version blocks embedding — trying another upload…', false);
-  const response = await window.api.searchAlternative(query, altTriedIds).catch(() => null);
-  // user may have picked another track while we were searching — don't
-  // overwrite their choice (report handled so no skip fires either).
-  // Compare by id: radio-queue replacement recreates track objects but a
-  // genuinely different user pick always means a different id.
-  if (queueManager.getCurrent()?.id !== track.id) return true;
-  const candidate = response?.ok ? response.results[0] : null;
-  if (!candidate) return false;
-  queueManager.replaceCurrentTrack(candidate); // loads + persists the playable id
-  return true;
-}
-
 export function handlePlayerError(code, currentTrack) {
+  // A failure long after the last one is a new episode — don't inherit a
+  // maxed-out skip budget from a previous stuck song.
+  const now = Date.now();
+  if (now - lastFailureAt > EPISODE_GAP_MS) resetGuards();
+  lastFailureAt = now;
+
   const message = MESSAGES[code] ?? `Playback error (code ${code})`;
   failedVideoId = currentTrack?.id ?? null;
-  showFallback(message, !!failedVideoId);
 
-  if (BLOCKED_CODES.has(code) && currentTrack) {
-    tryAlternativeVersion(currentTrack).then((swapped) => {
-      if (!swapped) scheduleSkip(message);
-    });
+  if (EMBED_BLOCKED_CODES.has(code) && currentTrack) {
+    // Same song, real video, via YouTube Music. The id is remembered
+    // (webOnlyIds) so future plays route straight to the web backend.
+    showFallback('Playing via YouTube Music — this song blocks embedding', false);
+    forceWeb(currentTrack.id);
     return;
   }
+
+  showFallback(message, !!failedVideoId);
   scheduleSkip(message);
 }
 
 // Call on successful playback — clears fallback and resets all guards.
 export function clearPlayerError() {
-  consecutiveSkips = 0;
+  resetGuards();
   failedVideoId = null;
-  altSongKey = null;
-  altTriedIds = [];
-  altAttempts = 0;
   clearTimeout(skipTimer);
   els.fallback.classList.add('hidden');
 }

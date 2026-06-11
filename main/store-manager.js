@@ -9,6 +9,11 @@ const DEFAULTS = {
   repeat: 'off', // 'off' | 'one' | 'all'
   playlists: [], // [{name, tracks:[{id,title,channel,duration,thumbnail}]}]
   alwaysOnTop: false, // pin window above others (titlebar 📌 toggle)
+  focusMode: false, // compact 340×116 window (titlebar + controls only)
+  searchHistory: [], // recent search queries, MRU first, capped at 10
+  searchMode: 'music', // 'music' (YT Music songs) | 'video' (real YouTube videos)
+  trackStats: {}, // id → {plays,skips,earlySkips,disliked,artist,lastAt} (recommendation scoring)
+  webOnlyIds: [], // tracks proven unplayable in embeds → route straight to the web backend
 };
 
 // Keys the renderer is allowed to read/write over IPC

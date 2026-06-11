@@ -1,6 +1,8 @@
 // Single source of truth for the play queue + repeat behavior.
 // Persists queue/queueIndex write-through via injected persist function.
-import * as player from './player-controller.js';
+// Playback goes through the router: embed-blocked tracks transparently play
+// on the hidden web backend instead of the iframe.
+import * as player from './playback-router.js';
 
 let queue = []; // [{id,title,channel,thumbnail}]
 let index = -1;
@@ -101,6 +103,19 @@ export function appendTracks(tracks) {
   changed();
 }
 
+// Reorder (drag & drop): move the track at `from` so it sits at `to`.
+// The current-track pointer follows the song it points at, never the slot.
+export function moveTrack(from, to) {
+  if (from === to) return;
+  if (from < 0 || to < 0 || from >= queue.length || to >= queue.length) return;
+  const [moved] = queue.splice(from, 1);
+  queue.splice(to, 0, moved);
+  if (index === from) index = to;
+  else if (from < index && to >= index) index -= 1;
+  else if (from > index && to <= index) index += 1;
+  changed();
+}
+
 export function removeAt(removeIndex) {
   if (removeIndex < 0 || removeIndex >= queue.length) return;
   const removedCurrent = removeIndex === index;
@@ -156,18 +171,6 @@ export function onEnded() {
     return true;
   }
   return next(); // handles 'all' wrap; 'off' stops at end
-}
-
-// Swap the current entry to an alternative upload of the same song (used when
-// the original version is embed-blocked). Keeps the song's title/channel
-// identity; the playable id is persisted so next time it just works.
-export function replaceCurrentTrack(alternative) {
-  const track = getCurrent();
-  if (!track || !alternative?.id) return;
-  track.id = alternative.id;
-  if (!track.thumbnail && alternative.thumbnail) track.thumbnail = alternative.thumbnail;
-  if (alternative.duration) track.duration = alternative.duration;
-  loadCurrent();
 }
 
 // Fill in title/channel for tracks added via pasted URL (metadata arrives

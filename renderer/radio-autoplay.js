@@ -2,8 +2,11 @@
 // up-next queue of related tracks, and an exhausted queue extends itself so
 // playback keeps going instead of stopping at the last item.
 import * as queueManager from './queue-manager.js';
+import { rankUpNext } from './track-scoring.js';
 
 // Play a searched song now and replace the queue with [song, ...its radio].
+// Radio candidates pass through rankUpNext: disliked/heavily-skipped tracks
+// are dropped, known-liked tracks/artists float to the top.
 export async function playWithRadio(track) {
   queueManager.playNow(track); // instant playback first, radio fills in after
   const queued = queueManager.getCurrent(); // the queue's own copy of the track
@@ -12,7 +15,9 @@ export async function playWithRadio(track) {
   // have swapped ids meanwhile — `queued` object identity survives id swaps
   if (queueManager.getCurrent() !== queued) return;
   if (!response?.ok || !response.results.length) return;
-  queueManager.setQueue([{ ...queued }, ...response.results], 0);
+  const ranked = rankUpNext(response.results);
+  if (!ranked.length) return; // everything filtered out — keep the single track
+  queueManager.setQueue([{ ...queued }, ...ranked], 0);
 }
 
 // Queue ran out (repeat off, last track ended) — fetch the last track's radio,
@@ -25,6 +30,6 @@ export async function extendQueueWithRadio() {
   const response = await window.api.getUpNext(last.id).catch(() => null);
   if (!response?.ok || !response.results.length) return;
   if (queueManager.getCurrent() !== last) return; // user moved on meanwhile
-  queueManager.appendTracks(response.results);
+  queueManager.appendTracks(rankUpNext(response.results));
   if (queueManager.getQueue().length > before) queueManager.next();
 }

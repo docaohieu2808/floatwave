@@ -3,6 +3,7 @@
 // play queue with it (standard player semantics).
 import { els, renderTrackList, showPanel } from './ui-elements.js';
 import * as queueManager from './queue-manager.js';
+import { moveItem } from './format-utils.js';
 import { ICONS } from './icons.js';
 
 let playlists = []; // [{name, tracks:[{id,title,channel,duration,thumbnail}]}]
@@ -116,8 +117,31 @@ function renderListView() {
     ul.appendChild(headerRow('No playlists yet — use a song’s + button to create one.', null));
     return;
   }
+  let dragFromIndex = -1; // playlist-row drag & drop (reorder the playlists)
   playlists.forEach((playlist, index) => {
     const li = document.createElement('li');
+    li.draggable = true;
+    li.addEventListener('dragstart', (event) => {
+      dragFromIndex = index;
+      li.classList.add('dragging');
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', String(index));
+    });
+    li.addEventListener('dragend', () => li.classList.remove('dragging'));
+    li.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      if (dragFromIndex >= 0 && dragFromIndex !== index) li.classList.add('drag-over');
+    });
+    li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
+    li.addEventListener('drop', (event) => {
+      event.preventDefault();
+      if (dragFromIndex >= 0 && dragFromIndex !== index) {
+        moveItem(playlists, dragFromIndex, index);
+        persist();
+        renderPlaylistsTab();
+      }
+      dragFromIndex = -1;
+    });
     const meta = document.createElement('div');
     meta.className = 'meta';
     const title = document.createElement('div');
@@ -158,6 +182,11 @@ function renderDetailView() {
     onPlay: (_track, index) => {
       queueManager.setQueue(playlist.tracks, index);
       queueManager.playAt(index);
+    },
+    onReorder: (from, to) => {
+      moveItem(playlist.tracks, from, to);
+      persist();
+      renderPlaylistsTab();
     },
     actions: [
       {

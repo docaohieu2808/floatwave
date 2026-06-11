@@ -11,12 +11,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 
 // Strict allowlist — never expose package.json, node_modules, store data, etc.
-const ALLOWED_PATH_RE = /^\/(index\.html|renderer\/[\w.-]+\.(?:js|css))$/;
+const ALLOWED_PATH_RE =
+  /^\/(index\.html|renderer\/[\w.-]+\.(?:js|css)|assets\/[\w.-]+\.(?:png|svg))$/;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
+  '.png': 'image/png',
+  '.svg': 'image/svg+xml',
 };
 
 let server = null;

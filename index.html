@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' https://www.youtube.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com; img-src https: data:; style-src 'self' 'unsafe-inline'; connect-src 'self'" />
-  <title>YouTube Music Mini-Player</title>
+        content="default-src 'self'; script-src 'self' https://www.youtube.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; connect-src 'self'" />
+  <title>FloatWave</title>
+  <link rel="icon" href="assets/floatwave.png" />
   <link rel="stylesheet" href="renderer/styles.css" />
 </head>
 <body>
@@ -20,6 +21,7 @@
     <!-- icons injected at boot from renderer/icons.js (SVG, no emoji) -->
     <div id="titlebar-buttons">
       <button id="btn-pin" title="Pin on top"></button>
+      <button id="btn-focus-mode" title="Focus mode (compact bar)"></button>
       <button id="btn-web-mode" title="YouTube Music (web)"></button>
       <button id="btn-panel" title="Queue / Favorites"></button>
       <button id="btn-minimize" title="Minimize"></button>
@@ -28,8 +30,12 @@
   </header>
 
   <div id="search-bar">
+    <!-- 🎵 Music (YT Music songs) ⇄ 🎬 Video (real YouTube videos) search mode -->
+    <button id="btn-search-mode" title="Search mode"></button>
     <input id="search-input" type="text" spellcheck="false"
            placeholder="Search YouTube or paste a link…" />
+    <!-- recent searches dropdown (shown when the empty input is focused) -->
+    <div id="search-history" class="hidden"></div>
   </div>
 
   <main id="content">
@@ -37,10 +43,25 @@
       <div id="player"></div>
     </div>
 
+    <!-- Branded splash shown when nothing is playing (empty player area) -->
+    <div id="brand-splash" class="hidden">
+      <img id="brand-logo" src="assets/floatwave.png" alt="FloatWave" />
+      <div id="brand-name">FloatWave</div>
+      <div id="brand-tagline">Stream video, float music</div>
+    </div>
+
     <!-- Fallback overlay for embed-blocked / failed videos -->
     <div id="player-fallback" class="hidden">
       <p id="fallback-message"></p>
       <button id="btn-open-youtube">Open on YouTube</button>
+    </div>
+
+    <!-- Backend B (hidden YouTube Music) has no visible video here — show the
+         track artwork + a caption so the player area isn't blank -->
+    <div id="web-art" class="hidden">
+      <div id="web-art-bg"></div>
+      <img id="web-art-img" alt="" />
+      <div id="web-art-caption">Playing via YouTube Music</div>
     </div>
 
     <!-- Sliding panel: search results / queue / favorites -->
@@ -84,6 +105,7 @@
       <button id="btn-play" title="Play / Pause"></button>
       <button id="btn-next" title="Next"></button>
       <input id="volume" type="range" min="0" max="100" value="50" title="Volume" />
+      <button id="btn-dislike" title="Dislike: skip &amp; stop suggesting this"></button>
       <button id="btn-favorite" title="Favorite"></button>
     </div>
   </footer>

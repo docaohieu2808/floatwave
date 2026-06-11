@@ -5,8 +5,11 @@
 // thickFrame insets). The window + its persist: session stay alive across
 // toggles so Google login and playback position survive.
 import { BrowserWindow, shell } from 'electron';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getStore } from './store-manager.js';
 
+const APP_ICON = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'floatwave.ico');
 const WEB_SIZE = { width: 960, height: 640 };
 // Google blocks sign-in from Electron-flavored user agents — present plain Chrome
 const CHROME_UA =
@@ -14,11 +17,27 @@ const CHROME_UA =
 
 let webWindow = null;
 let miniWindow = null;
+// web-playback-backend installs this: true while the HIDDEN window is the
+// active audio backend — exiting web mode must then NOT pause the video.
+let playbackGuard = () => false;
+
+export function setPlaybackGuard(fn) {
+  playbackGuard = fn;
+}
 
 function pauseWebPlayback() {
   webWindow?.webContents
     .executeJavaScript('document.querySelector("video")?.pause()', true)
     .catch(() => {});
+}
+
+// The window without showing it — web-playback-backend plays through it hidden.
+export function ensureWebWindow(miniWin) {
+  return getWebWindow(miniWin);
+}
+
+export function getExistingWebWindow() {
+  return webWindow && !webWindow.isDestroyed() ? webWindow : null;
 }
 
 function getWebWindow(miniWin) {
@@ -28,6 +47,8 @@ function getWebWindow(miniWin) {
   webWindow = new BrowserWindow({
     width: WEB_SIZE.width,
     height: WEB_SIZE.height,
+    title: 'FloatWave — YouTube Music',
+    icon: APP_ICON,
     alwaysOnTop: !!getStore().get('alwaysOnTop'), // follows the 📌 preference
     autoHideMenuBar: true,
     backgroundColor: '#0f0f0f',
@@ -37,6 +58,8 @@ function getWebWindow(miniWin) {
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,
+      // hidden-backend playback: polling + media must keep running unthrottled
+      backgroundThrottling: false,
     },
   });
 
@@ -77,6 +100,28 @@ export function setWebAlwaysOnTop(flag) {
   if (webWindow && !webWindow.isDestroyed()) webWindow.setAlwaysOnTop(flag);
 }
 
+// Web mode owns playback while its window is showing — global hotkeys are
+// routed here instead of the (hidden, paused) mini player.
+export function isWebModeActive() {
+  return !!webWindow && !webWindow.isDestroyed() && webWindow.isVisible();
+}
+
+// Drive music.youtube.com playback from global hotkeys. play/pause goes
+// through the <video> element (stable); next/prev click the player-bar
+// buttons (ytmusic class names — stable for years, but YouTube-owned).
+const WEB_MEDIA_JS = {
+  'play-pause':
+    "(() => { const v = document.querySelector('video'); if (v) v.paused ? v.play() : v.pause(); })()",
+  next: "document.querySelector('ytmusic-player-bar .next-button')?.click()",
+  prev: "document.querySelector('ytmusic-player-bar .previous-button')?.click()",
+};
+
+export function sendWebMediaCommand(action) {
+  const js = WEB_MEDIA_JS[action];
+  if (!js || !isWebModeActive()) return;
+  webWindow.webContents.executeJavaScript(js, true).catch(() => {});
+}
+
 export function enterWebMode(miniWin) {
   if (!miniWin || miniWin.isDestroyed()) return;
   const win = getWebWindow(miniWin);
@@ -86,7 +131,8 @@ export function enterWebMode(miniWin) {
 
 export function exitWebMode(miniWin) {
   if (!webWindow) return;
-  pauseWebPlayback();
+  // closing the visible window must not silence the hidden audio backend
+  if (!playbackGuard()) pauseWebPlayback();
   webWindow.hide();
   if (miniWin && !miniWin.isDestroyed()) {
     miniWin.show();

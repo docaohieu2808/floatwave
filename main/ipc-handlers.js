@@ -1,30 +1,64 @@
 // All ipcMain handlers — window controls, search, store get/set, open-external.
 import { ipcMain, shell } from 'electron';
-import { searchYouTube, findAlternativeVideos, getUpNextTracks } from './youtube-search.js';
+import { searchYouTube, getUpNextTracks } from './youtube-search.js';
 import { getStore, STORE_KEYS } from './store-manager.js';
-import { enterWebMode, exitWebMode, setWebAlwaysOnTop } from './web-mode-manager.js';
+import {
+  enterWebMode, exitWebMode, setWebAlwaysOnTop,
+  ensureWebWindow, getExistingWebWindow, setPlaybackGuard,
+} from './web-mode-manager.js';
+import {
+  initWebPlayback, isWebPlaybackActive, webPlayLoad, webPlayControl, stopWebPlayback,
+} from './web-playback-backend.js';
+import { setCompactMode } from './window-manager.js';
+import { applyEmbedLoudness } from './embed-loudness.js';
 
 // Only allow opening canonical YouTube watch URLs externally
 const YT_WATCH_RE = /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}$/;
 
 export function registerIpc(win) {
+  // backend B (hidden music.youtube.com playback for embed-blocked tracks)
+  initWebPlayback(win, { ensure: ensureWebWindow, getExisting: getExistingWebWindow });
+  setPlaybackGuard(isWebPlaybackActive); // exiting web mode must not silence it
+
   ipcMain.handle('app:ping', () => 'pong');
 
+  ipcMain.handle('webplay:load', (_event, videoId, volume) => webPlayLoad(videoId, volume));
+  ipcMain.handle('webplay:control', (_event, action, value) => webPlayControl(action, value));
+  ipcMain.handle('webplay:stop', () => {
+    stopWebPlayback();
+    return true;
+  });
+
   ipcMain.handle('win:minimize', () => {
-    if (!win.isDestroyed()) win.minimize();
+    if (win.isDestroyed()) return;
+    // An always-on-top (topmost) window on Windows minimizes toward the tray
+    // notification area instead of the taskbar. Drop the topmost flag while
+    // minimized, then restore it (if still the user's preference) on un-minimize
+    // so it collapses to the taskbar like a normal app.
+    if (win.isAlwaysOnTop()) {
+      win.setAlwaysOnTop(false);
+      win.once('restore', () => {
+        if (!win.isDestroyed() && getStore().get('alwaysOnTop')) win.setAlwaysOnTop(true);
+      });
+    }
+    win.minimize();
   });
 
   ipcMain.handle('win:close', () => {
     if (!win.isDestroyed()) win.close();
   });
 
-  ipcMain.handle('search:youtube', (_event, query) => searchYouTube(query));
-
-  ipcMain.handle('search:alternative', (_event, query, excludeIds) =>
-    findAlternativeVideos(query, excludeIds)
-  );
+  ipcMain.handle('search:youtube', (_event, query, mode) => searchYouTube(query, mode));
 
   ipcMain.handle('radio:up-next', (_event, videoId) => getUpNextTracks(videoId));
+
+  // Focus mode: renderer hides search+player via CSS; window shrinks to match
+  ipcMain.handle('win:set-compact', (_event, compact) => {
+    const flag = !!compact;
+    setCompactMode(flag);
+    getStore().set('focusMode', flag);
+    return flag;
+  });
 
   ipcMain.handle('store:get', (_event, key) => {
     if (!STORE_KEYS.has(key)) return undefined;
@@ -37,19 +71,13 @@ export function registerIpc(win) {
     return true;
   });
 
-  // Bypass YouTube's embed loudness normalization: the player caps the
-  // <video> element gain per-track (e.g. 0.85 at "100%") with no opt-out in
-  // embeds. The renderer can't reach the cross-origin iframe, but main can —
-  // force the element gain to match the user's slider exactly.
-  ipcMain.handle('player:set-gain', (_event, value) => {
-    const gain = Math.min(1, Math.max(0, Number(value)));
-    if (Number.isNaN(gain) || win.isDestroyed()) return false;
-    const frame = win.webContents.mainFrame.framesInSubtree.find((f) =>
-      f.url.includes('youtube.com/embed')
-    );
-    frame
-      ?.executeJavaScript(`(() => { const v = document.querySelector('video'); if (v) v.volume = ${gain}; })()`)
-      .catch(() => {});
+  // Match the embed's loudness to the web backend: undo YouTube's embed
+  // "stable volume" by boosting each track up to its −14 dB target via a Web
+  // Audio makeup-gain injected into the cross-origin embed frame (the renderer
+  // can't reach it; main can). Also carries the user's volume onto the element.
+  ipcMain.handle('player:set-gain', (_event, value, build) => {
+    if (win.isDestroyed()) return false;
+    applyEmbedLoudness(win, value, build);
     return true;
   });
 

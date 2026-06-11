@@ -44,3 +44,12 @@ export function isLikelyUrl(input) {
     String(input ?? '').trim()
   );
 }
+
+// In-place array reorder (drag & drop lists: favorites, playlists, results).
+// The queue has its own moveTrack — it must also fix its current-index pointer.
+export function moveItem(array, from, to) {
+  if (from === to) return;
+  if (from < 0 || to < 0 || from >= array.length || to >= array.length) return;
+  const [moved] = array.splice(from, 1);
+  array.splice(to, 0, moved);
+}

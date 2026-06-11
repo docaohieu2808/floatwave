@@ -72,6 +72,7 @@ button svg, .icon svg {
   -webkit-app-region: drag;
 }
 #track-info { overflow: hidden; line-height: 1.25; }
+/* 144px = 340 − 6 titlebar buttons (180) − paddings; keeps the row from overflowing */
 #track-title {
   font-weight: 600;
   font-size: 12px;
@@ -79,7 +80,7 @@ button svg, .icon svg {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 190px;
+  max-width: 144px;
 }
 #track-artist {
   color: var(--fg-dim);
@@ -87,7 +88,7 @@ button svg, .icon svg {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 190px;
+  max-width: 144px;
 }
 #titlebar-buttons { display: flex; gap: 1px; }
 #titlebar-buttons button {
@@ -102,6 +103,7 @@ button svg, .icon svg {
 
 /* ---------- Search bar ---------- */
 #search-bar {
+  position: relative; /* anchors the recent-searches dropdown */
   height: var(--search-h);
   flex: 0 0 var(--search-h);
   display: flex;
@@ -109,8 +111,74 @@ button svg, .icon svg {
   padding: 0 12px;
   background: var(--bg);
 }
+
+/* Recent searches dropdown (focused empty input) */
+#search-history {
+  position: absolute;
+  top: 40px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  padding: 4px;
+  z-index: 40; /* above panel (10), below chooser (50) */
+  max-height: 250px;
+  overflow-y: auto;
+}
+.history-row {
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+}
+.history-row:hover { background: var(--bg-hover); }
+.history-pick {
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--fg);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: none;
+}
+.history-pick:hover { background: none; }
+.history-pick svg { width: 13px; height: 13px; color: var(--fg-dim); flex: 0 0 13px; }
+.history-remove {
+  flex: 0 0 24px;
+  height: 24px;
+  margin-right: 4px;
+  color: var(--fg-dim);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.history-row:hover .history-remove { opacity: 1; }
+.history-remove:hover { color: var(--fg); background: none; }
+.history-remove svg { width: 12px; height: 12px; }
+/* Music ⇄ Video search-mode toggle, sits left of the search input */
+#btn-search-mode {
+  flex: 0 0 30px;
+  height: 30px;
+  margin-right: 6px;
+  border: 1px solid var(--hairline);
+  border-radius: 50%;
+  background: var(--bg-soft);
+  color: var(--fg-dim);
+}
+#btn-search-mode:hover { color: var(--fg); }
+#btn-search-mode.active { color: var(--accent); border-color: var(--accent); }
+#btn-search-mode svg { width: 15px; height: 15px; }
+
 #search-input {
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0; /* allow shrinking beside the mode toggle, no overflow */
   height: 30px;
   padding: 0 12px;
   border-radius: 15px;
@@ -149,6 +217,74 @@ button svg, .icon svg {
   border-radius: 18px; /* Roon pill button */
 }
 #btn-open-youtube:hover { background: #8f90ee; }
+
+/* Brand splash: shown in the player area when nothing is playing */
+#brand-splash {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: var(--bg);
+  z-index: 4;
+}
+#brand-logo {
+  width: 92px;
+  height: 92px;
+  border-radius: 20px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+}
+#brand-name {
+  margin-top: 12px;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.3px;
+}
+#brand-tagline { color: var(--fg-dim); font-size: 12px; }
+
+/* Backend B artwork: fills the player area (z below the panel so queue/search
+   cover it). Blurred cover fill + crisp centered art, Roon-ish. */
+#web-art {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+  z-index: 6;
+}
+/* blurred, dimmed cover fill behind the crisp art (no black bars) */
+#web-art-bg {
+  position: absolute;
+  inset: -20px; /* overscan so the blur has no transparent edges */
+  background-size: cover;
+  background-position: center;
+  filter: blur(28px) brightness(0.55);
+  transform: scale(1.1);
+  z-index: 0;
+}
+#web-art-img {
+  max-width: 78%;
+  max-height: 72%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+#web-art-caption {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.82);
+  letter-spacing: 0.2px;
+  z-index: 1;
+}
 
 #panel {
   position: absolute;
@@ -208,6 +344,10 @@ button svg, .icon svg {
 .track-list .row-action { flex: 0 0 26px; height: 26px; color: var(--fg-dim); }
 .track-list .row-action:hover { color: var(--fg); }
 .track-list .row-action svg { width: 14px; height: 14px; }
+
+/* Queue drag & drop */
+.track-list li.dragging { opacity: 0.45; }
+.track-list li.drag-over { box-shadow: inset 0 2px 0 var(--accent); }
 
 .track-list .list-header {
   position: sticky;
@@ -327,6 +467,14 @@ button svg, .icon svg {
   color: var(--fg-dim);
 }
 #btn-favorite.active { color: var(--accent); border-color: var(--accent); }
+/* dislike: active = red, this song is banned from suggestions */
+#btn-dislike { color: var(--fg-dim); }
+#btn-dislike.active { color: var(--danger); }
+#btn-dislike svg { width: 15px; height: 15px; }
+
+/* ---------- Focus mode: titlebar + controls only, 340×116 window ---------- */
+body.focus-mode #search-bar,
+body.focus-mode #content { display: none; }
 
 /* Range bars. Volume: thin accent line. Seek: Roon waveform — tall bar
    masked by per-track bars (waveform.js), played portion dark. */

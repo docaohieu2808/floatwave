@@ -1,5 +1,7 @@
 // Bootstrap: wires modules together, hydrates persisted state, binds controls.
-import * as player from './player-controller.js';
+// `player` is the backend router — iframe embed normally, hidden web window
+// for embed-blocked tracks; this file never needs to know which is sounding.
+import * as player from './playback-router.js';
 import * as queueManager from './queue-manager.js';
 import { initSearch, renderResults } from './search-ui.js';
 import * as favorites from './favorites-ui.js';
@@ -8,12 +10,14 @@ import {
 } from './error-handler.js';
 import { extendQueueWithRadio } from './radio-autoplay.js';
 import { initPlaylists, renderPlaylistsTab } from './playlists-ui.js';
+import { initScoring, noteTrackChange, toggleDisliked, isDisliked } from './track-scoring.js';
+import { initFocusMode } from './focus-mode.js';
 import { applyWaveformMask } from './waveform.js';
 import { formatTime } from './format-utils.js';
 import {
   els, setTrackInfo, setPlayIcon, setTimes, setRepeatIcon, applyStaticIcons,
   showPanel, hidePanel, isPanelOpen, setPanelMessage, renderTrackList,
-  setArtworkBackground, setRangeFill,
+  setArtworkBackground, setRangeFill, setDislikeIcon,
 } from './ui-elements.js';
 import { ICONS } from './icons.js';
 
@@ -21,17 +25,40 @@ const REPEAT_CYCLE = { off: 'one', one: 'all', all: 'off' };
 
 // Embed loudness normalization caps the <video> gain below the user's slider
 // (no opt-out in embeds) — force the element gain to match the slider via main.
-function applyElementGain() {
-  window.api.setGain(Number(els.volume.value) / 100);
+// build=true engages the Web Audio loudness graph — only pass it on a real
+// volume interaction (a genuine user gesture unlocks the embed's audio context;
+// boot/autoplay calls must NOT build it or playback can be silent until the
+// slider is touched). See main/embed-loudness.js.
+function applyElementGain(build = false) {
+  window.api.setGain(Number(els.volume.value) / 100, build);
+}
+
+function artworkUrl(track) {
+  return track ? track.thumbnail || `https://i.ytimg.com/vi/${track.id}/hqdefault.jpg` : null;
+}
+
+// Backend B has no visible video in the mini window — fill the player area with
+// the track artwork instead of leaving it blank. Shown for web-routed tracks,
+// hidden whenever the iframe owns playback.
+function updateWebArt(track) {
+  const url = player.isWebPlayback() ? artworkUrl(track) : null;
+  if (url) {
+    els.webArtImg.src = url;
+    els.webArtBg.style.backgroundImage = `url("${url}")`;
+    els.webArt.classList.remove('hidden');
+  } else {
+    els.webArt.classList.add('hidden');
+  }
 }
 
 // Per-track visuals: artwork backdrop (hidden in the flat Roon-light theme,
-// kept for a future dark theme) + the seek bar's per-track waveform shape.
+// kept for a future dark theme) + the seek bar's per-track waveform shape +
+// the backend-B artwork panel + the empty-state brand splash.
 function updateArtwork(track) {
-  setArtworkBackground(
-    track ? track.thumbnail || `https://i.ytimg.com/vi/${track.id}/hqdefault.jpg` : null
-  );
+  setArtworkBackground(artworkUrl(track));
   applyWaveformMask(els.seek, track?.id);
+  updateWebArt(track);
+  els.brandSplash.classList.toggle('hidden', !!track); // shown only when idle
 }
 const PLAYER_LOAD_TIMEOUT_MS = 12000;
 
@@ -44,6 +71,7 @@ function renderQueueList() {
     currentId: queueManager.getCurrent()?.id,
     // index-based jump — duplicate ids in a radio queue must not mis-target
     onPlay: (_track, index) => queueManager.playAt(index),
+    onReorder: (from, to) => queueManager.moveTrack(from, to), // drag & drop
     actions: [
       { icon: ICONS.close, title: 'Remove from queue', onClick: (_track, index) => queueManager.removeAt(index) },
     ],
@@ -122,6 +150,17 @@ function bindControls() {
     if (current) favorites.toggleFavorite(current);
   });
 
+  // 👎 = "stop suggesting this": mark + skip. Un-disliking doesn't skip.
+  // At the end of the queue next() can't advance — extend with radio instead
+  // (same fallback the ENDED handler uses) so the disliked song never lingers.
+  els.btnDislike.addEventListener('click', () => {
+    const current = queueManager.getCurrent();
+    if (!current) return;
+    const disliked = toggleDisliked(current);
+    setDislikeIcon(disliked);
+    if (disliked && !queueManager.next()) extendQueueWithRadio();
+  });
+
   // Seek: while dragging, preview time only; commit on release ('change')
   els.seek.addEventListener('input', () => {
     isDraggingSeek = true;
@@ -141,7 +180,7 @@ function bindControls() {
     const value = Number(els.volume.value);
     player.setVolume(value);
     setRangeFill(els.volume, value);
-    applyElementGain();
+    applyElementGain(true); // real user gesture — safe to build the loudness graph
     clearTimeout(volumePersistTimer);
     volumePersistTimer = setTimeout(() => window.api.setStore('volume', value), 300);
   });
@@ -152,6 +191,9 @@ function bindPlayerEvents() {
     setPlayIcon(state === player.STATE.PLAYING);
     if (state === player.STATE.PLAYING) {
       clearPlayerError();
+      // backend B sounds from the hidden web window; show the track artwork in
+      // the player area so it isn't blank (clearPlayerError hid the fallback)
+      if (player.isWebPlayback()) updateWebArt(queueManager.getCurrent());
       syncMetadataFromPlayer();
       applyElementGain(); // YT re-applies its normalized gain on every load
     }
@@ -169,6 +211,21 @@ function bindPlayerEvents() {
   player.on('error', (code) => handlePlayerError(code, queueManager.getCurrent()));
 }
 
+// Global hotkeys (media keys / Ctrl+Alt combos) — forwarded from main.
+// Ignored in web mode: music.youtube.com owns playback there and unpausing
+// the hidden mini player would have two players sounding at once.
+function bindHotkeys() {
+  const ACTIONS = {
+    'play-pause': () => player.toggle(),
+    next: () => queueManager.next(),
+    prev: () => queueManager.prev(),
+  };
+  window.api.onHotkey((action) => {
+    if (webMode) return;
+    ACTIONS[action]?.();
+  });
+}
+
 // Pasted URLs enter the queue with only an ID — pull real title/channel
 // from the player once the video is loaded.
 function syncMetadataFromPlayer() {
@@ -182,6 +239,7 @@ function syncMetadataFromPlayer() {
 }
 
 async function hydrateAndStart() {
+  await player.initRouter(); // webOnlyIds must be known before any load() routes
   const [volume, repeat, storedQueue, storedIndex, storedPin] = await Promise.all([
     window.api.getStore('volume'),
     window.api.getStore('repeat'),
@@ -219,11 +277,17 @@ async function hydrateAndStart() {
       setTrackInfo(track?.title, track?.channel); // null = queue emptied
       favorites.refreshFavoriteIcon(track);
       updateArtwork(track);
+      noteTrackChange(track); // close previous listen, start tracking this one
+      setDislikeIcon(track ? isDisliked(track.id) : false);
     },
   });
   queueManager.setRepeat(repeatMode);
+  // brand splash shows when the queue is empty (onTrackChange won't fire at boot)
+  els.brandSplash.classList.toggle('hidden', !!queueManager.getCurrent());
   await favorites.initFavorites();
   await initPlaylists();
+  await initScoring(); // after favorites: scoring reads isFavorite()
+  await initFocusMode();
 
   // Player init needs network (YouTube IFrame API). Show a notice if slow,
   // but COMPLETE init whenever it does resolve — a late ready must not leave
@@ -240,6 +304,8 @@ async function hydrateAndStart() {
       setTrackInfo(current.title, current.channel);
       favorites.refreshFavoriteIcon(current);
       updateArtwork(current);
+      noteTrackChange(current); // boot-cued track gets listen-tracking too
+      setDislikeIcon(isDisliked(current.id));
     }
   };
   await Promise.race([
@@ -261,6 +327,7 @@ function boot() {
   bindPanel();
   bindControls();
   bindPlayerEvents();
+  bindHotkeys();
   initSearch();
   initErrorHandler();
   hydrateAndStart();

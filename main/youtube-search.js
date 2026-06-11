@@ -49,23 +49,6 @@ async function searchVideosFallback(query) {
     }));
 }
 
-// Finds alternative uploads of a song (MV / lyric video) when its YT Music
-// "song" version turns out embed-blocked at play time. Label ATV tracks often
-// block embeds even though playability APIs claim OK — only general-video
-// uploads of the same song are reliably embeddable. Candidates are tried in
-// order by the renderer; excludeIds = versions that already failed.
-export async function findAlternativeVideos(query, excludeIds = []) {
-  const q = String(query ?? '').trim();
-  if (!q) return { ok: true, results: [] };
-  const excluded = new Set(Array.isArray(excludeIds) ? excludeIds : []);
-  try {
-    const results = (await searchVideosFallback(q)).filter((v) => !excluded.has(v.id));
-    return { ok: true, results: results.slice(0, 5) };
-  } catch (err) {
-    return { ok: false, error: String(err?.message ?? err) };
-  }
-}
-
 // YouTube Music "up next" radio for a seed track — powers playlist-like
 // auto-advance: clicking a song builds a related-songs queue, and when the
 // queue runs out the app extends it with the last track's radio.
@@ -92,9 +75,20 @@ export async function getUpNextTracks(videoId) {
   }
 }
 
-export async function searchYouTube(query) {
+// mode 'music' (default): YT Music catalog → clean songs (artist/album), but
+// these are mostly Art Tracks (audio + square album art, no real video).
+// mode 'video': YouTube video search → real video uploads (MV/lyric/live) that
+// actually play video in the embed. The search bar's 🎵/🎬 toggle picks the mode.
+export async function searchYouTube(query, mode = 'music') {
   const q = String(query ?? '').trim();
   if (!q) return { ok: true, results: [] };
+  if (mode === 'video') {
+    try {
+      return { ok: true, results: await searchVideosFallback(q) };
+    } catch (err) {
+      return { ok: false, error: String(err?.message ?? err) };
+    }
+  }
   try {
     const results = await searchMusicCatalog(q);
     if (results.length) return { ok: true, results };
