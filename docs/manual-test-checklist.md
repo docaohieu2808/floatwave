@@ -6,7 +6,9 @@ Run with `npm start`. Automated coverage: `npm run check`, `scripts/verify-app.c
 ## Window shell
 - [ ] Launch: 340x420 frameless dark window, always-on-top over other apps
 - [ ] Empty queue ("No track"): heart + dislike icons still render (not blank buttons)
-- [ ] Titlebar drags the window; minimize + close buttons work
+- [ ] Titlebar drags the window; close (X) quits the app
+- [ ] Minimize button HIDES the window to the system tray (no taskbar button);
+      clicking the tray icon (or its "Show" menu) brings it back; tray "Quit" exits
 - [ ] Queue toggle (☰) opens/closes panel; Esc closes panel
 - [ ] Focus mode button (⊟ icon) collapses window to 340×116 (titlebar + controls only); click again to expand
 - [ ] Focus mode state persists across app relaunch

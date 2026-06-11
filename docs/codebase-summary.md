@@ -25,7 +25,9 @@ main process (ESM)               preload (CJS)               renderer (ESM)
 
 ### Main Process
 
-**main.js** — Entrypoint wiring only. Boots store, starts loopback server, creates window, registers IPC.
+**main.js** — Entrypoint wiring only. Sets `autoplay-policy=no-user-gesture-required` (so AudioContexts/media start without a gesture), then boots store, ad-blocker, loopback server, window, IPC, global shortcuts, and the system tray.
+
+**tray-manager.js** — System-tray icon (floatwave.ico). The titlebar minimize button hides the window to the tray (`win.hide()` — no taskbar button) instead of minimizing to the taskbar; clicking the tray icon or its "Show" menu item calls `win.show()` to bring it back (pin/size preserved); "Quit" exits. Tray destroyed on `before-quit`.
 
 **window-manager.js** — BrowserWindow creation & management. Default 340×420 frameless, dark bg (#0f0f0f). Always-on-top is a persisted user preference (store key `alwaysOnTop`, default false) toggled by the titlebar 📌 via `win:set-pin` IPC — applies to both mini and web windows. Focus mode (store key `focusMode`) collapses to 340×116 (titlebar + controls only) using `useContentSize=true` + `setContentSize` with will-resize event blocking (prevents Win10 frameless resize drift). Security: contextIsolation=true, sandbox=true, nodeIntegration=false, preload enabled.
 
@@ -120,7 +122,7 @@ Persisted state: volume, repeat, queue, queueIndex, favorites. Stored via electr
 
 **Error Masking for Player** — YouTube error codes 152/153 (embed blocked) are caught by loopback server test on launch; error codes 2/5/100/101/150 are caught by player.onError. Guard: max 3 auto-skips before fallback "queue stalled" message, preventing silent loops.
 
-**Fixed Window + No Tray (v1)** — Always-on-top, frameless 340×420, non-resizable. Closing the window quits app (no background agent). Simplifies lifecycle; tray is out-of-scope for v1.
+**Fixed Window + Tray** — Always-on-top (optional), frameless 340×420, non-resizable. The X button quits; the minimize button hides to a system-tray icon (tray-manager.js) and keeps the app running in the background.
 
 ## Verification Commands
 

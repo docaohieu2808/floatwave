@@ -9,7 +9,8 @@ for Windows. Plain Electron + vanilla JS — no bundler, no framework, no API ke
 
 ## Features
 
-- 340x420 frameless dark window, draggable titlebar, optional pin-on-top (📌 toggle, persisted)
+- 340x420 frameless window, draggable titlebar, optional pin-on-top (📌 toggle, persisted)
+- **Minimize to system tray:** the minimize button hides to a tray icon (click to restore); X quits
 - **Focus mode:** compact titlebar-only view (340×116) — one-click collapse/expand, persisted
 - **Music ⇄ Video search toggle** (🎵/🎬 left of the search box): Music = YouTube Music
   catalog (clean songs, mostly audio art-tracks); Video = real YouTube videos (MVs that
