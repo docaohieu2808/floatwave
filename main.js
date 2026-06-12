@@ -1,6 +1,6 @@
 // App entrypoint — lifecycle wiring only; window/IPC/store live in main/ modules.
 import { app } from 'electron';
-import { createMainWindow } from './main/window-manager.js';
+import { createMainWindow, getMainWindow } from './main/window-manager.js';
 import { registerIpc } from './main/ipc-handlers.js';
 import { registerGlobalShortcuts } from './main/global-shortcuts.js';
 import { initAdBlocker } from './main/ad-blocker.js';
@@ -15,18 +15,32 @@ import { startLocalServer } from './main/local-server.js';
 // lets media autoplay. Must be set before app is ready.
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
-app.whenReady().then(async () => {
-  getStore(); // ensure store file exists before renderer hydrates
-  initAdBlocker(); // fire-and-forget — must never delay or break startup
-  const pageUrl = await startLocalServer();
-  const win = createMainWindow(pageUrl);
-  registerIpc(win);
-  registerGlobalShortcuts(win);
-  initTray(win); // minimize hides to the tray; tray icon restores
-});
-
-app.on('window-all-closed', () => {
-  // The mini-player's X button quits. (Minimize HIDES to tray — that doesn't
-  // close the window, so this won't fire and the app keeps running in the tray.)
+// Single instance: relaunching the exe (common when it's hidden in the tray)
+// must surface the existing window instead of spawning a second FloatWave.
+if (!app.requestSingleInstanceLock()) {
   app.quit();
-});
+} else {
+  app.on('second-instance', () => {
+    const win = getMainWindow();
+    if (!win || win.isDestroyed()) return;
+    if (!win.isVisible()) win.show(); // was hidden to the tray
+    if (win.isMinimized()) win.restore();
+    win.focus();
+  });
+
+  app.whenReady().then(async () => {
+    getStore(); // ensure store file exists before renderer hydrates
+    initAdBlocker(); // fire-and-forget — must never delay or break startup
+    const pageUrl = await startLocalServer();
+    const win = createMainWindow(pageUrl);
+    registerIpc(win);
+    registerGlobalShortcuts(win);
+    initTray(win); // minimize hides to the tray; tray icon restores
+  });
+
+  app.on('window-all-closed', () => {
+    // The mini-player's X button quits. (Minimize HIDES to tray — that doesn't
+    // close the window, so this won't fire and the app keeps running in the tray.)
+    app.quit();
+  });
+}

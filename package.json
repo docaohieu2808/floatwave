@@ -47,7 +47,6 @@
   "dependencies": {
     "@ghostery/adblocker-electron": "^2.18.0",
     "electron-store": "^10.0.0",
-    "youtube-sr": "^4.3.12",
     "youtubei.js": "^17.0.1"
   },
   "devDependencies": {

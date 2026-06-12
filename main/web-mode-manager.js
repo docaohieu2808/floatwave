@@ -11,6 +11,28 @@ import { getStore } from './store-manager.js';
 
 const APP_ICON = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'floatwave.ico');
 const WEB_SIZE = { width: 960, height: 640 };
+
+// In-page ad killer for the YT Music window — runs in BOTH web mode (visible,
+// user-facing) and the hidden backend. The network ad-blocker can't stop video
+// ads (same domains as music); this 500ms in-page loop mutes an ad the instant
+// it appears, fast-forwards it, and clicks Skip, then restores audio. Survives
+// the SPA's internal navigation; re-injected on full reloads (guard prevents
+// duplicate intervals within one document).
+const AD_SKIPPER_JS = `(() => {
+  if (window.__fwAdSkip) return;
+  let mutedByAd = false;
+  window.__fwAdSkip = setInterval(() => {
+    const v = document.querySelector('video');
+    if (!v) return;
+    if (document.querySelector('.ad-showing, .ytp-ad-player-overlay')) {
+      if (!v.muted) { v.muted = true; mutedByAd = true; }
+      if (isFinite(v.duration) && v.duration > 0) v.currentTime = v.duration;
+      document.querySelector('.ytp-ad-skip-button, .ytp-skip-ad-button, .ytp-ad-skip-button-modern')?.click();
+    } else if (mutedByAd && v.muted) {
+      v.muted = false; mutedByAd = false;
+    }
+  }, 500);
+})()`;
 // Google blocks sign-in from Electron-flavored user agents — present plain Chrome
 const CHROME_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36';
@@ -72,6 +94,10 @@ function getWebWindow(miniWin) {
     return { action: 'deny' };
   });
   webWindow.webContents.loadURL('https://music.youtube.com');
+  // arm the in-page ad killer on every full page load
+  webWindow.webContents.on('did-finish-load', () => {
+    webWindow?.webContents.executeJavaScript(AD_SKIPPER_JS, true).catch(() => {});
+  });
 
   // Closing the web window = back to mini mode (window survives, hidden)
   webWindow.on('close', (event) => {

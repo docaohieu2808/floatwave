@@ -1,9 +1,9 @@
-// Music-first search: primary = YouTube Music catalog via youtubei.js
-// (InnerTube, keyless) so results are SONGS (artist/album), not random videos.
-// Fallback = youtube-sr general video search when the music path fails.
+// Search via youtubei.js (InnerTube, keyless) for BOTH modes: music =
+// `music.search(type:song)` (songs with artist/album); video = general
+// `search(type:video)` (real video uploads). One library — youtube-sr was
+// dropped: it breaks on YouTube response-format changes ("undefined browseId").
 // Returns minimal serializable records; never throws (structured error instead).
 import { Innertube } from 'youtubei.js';
-import { YouTube } from 'youtube-sr'; // CJS — class lives on the named export
 
 const RESULT_LIMIT = 15;
 
@@ -36,17 +36,25 @@ async function searchMusicCatalog(query) {
     }));
 }
 
+const VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
+
 async function searchVideosFallback(query) {
-  const videos = await YouTube.search(query, { limit: RESULT_LIMIT, type: 'video' });
-  return (videos ?? [])
-    .filter((v) => v && v.id)
-    .map((v) => ({
-      id: v.id,
-      title: v.title ?? 'Untitled',
-      channel: v.channel?.name ?? '',
-      duration: v.durationFormatted ?? '',
-      thumbnail: v.thumbnail?.url ?? '',
-    }));
+  const yt = await getInnertube();
+  const search = await yt.search(query, { type: 'video' });
+  const items = search?.results ?? [];
+  return items
+    .map((v) => {
+      const id = v.id ?? v.video_id ?? '';
+      return {
+        id,
+        title: v.title?.toString?.() ?? v.title?.text ?? 'Untitled',
+        channel: v.author?.name ?? '',
+        duration: v.duration?.text ?? v.length_text?.text ?? '',
+        thumbnail: v.thumbnails?.[0]?.url ?? v.thumbnail?.[0]?.url ?? '',
+      };
+    })
+    .filter((v) => VIDEO_ID_RE.test(v.id)) // drop shelves/playlists/non-video rows
+    .slice(0, RESULT_LIMIT);
 }
 
 // YouTube Music "up next" radio for a seed track — powers playlist-like
