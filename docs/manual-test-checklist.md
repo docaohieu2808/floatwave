@@ -9,6 +9,8 @@ Run with `npm start`. Automated coverage: `npm run check`, `scripts/verify-app.c
 - [ ] Titlebar drags the window; close (X) quits the app
 - [ ] Minimize button HIDES the window to the system tray (no taskbar button);
       clicking the tray icon (or its "Show" menu) brings it back; tray "Quit" exits
+- [ ] Single instance: launching FloatWave again (while open OR hidden in tray)
+      surfaces the existing window — never a second window
 - [ ] Queue toggle (☰) opens/closes panel; Esc closes panel
 - [ ] Focus mode button (⊟ icon) collapses window to 340×116 (titlebar + controls only); click again to expand
 - [ ] Focus mode state persists across app relaunch
@@ -29,6 +31,8 @@ Run with `npm start`. Automated coverage: `npm run check`, `scripts/verify-app.c
 - [ ] Keyword search → results list with thumbnail/title/channel/duration
 - [ ] Music/Video toggle (🎵/🎬 left of search): Music → YT Music songs (album art, no video
       for art-tracks); Video → real MV/video that plays 16:9 video in the embed; persists across relaunch
+- [ ] Video search returns results for hard queries (e.g. "rồi em sẽ gặp chàng trai khác") —
+      no "search failed" (youtubei.js video search, youtube-sr removed)
 - [ ] Click result → plays now; "+" → appends to queue without interrupting
 - [ ] Search history: focus empty search input → dropdown shows last 10 queries; click to search
 - [ ] Queue tab: current highlighted; ✕ removes row; index stays correct
@@ -68,7 +72,8 @@ Run with `npm start`. Automated coverage: `npm run check`, `scripts/verify-app.c
       "Playing via YouTube Music"), not a blank black box; hides when a normal track plays
 - [ ] Opening web mode (♪) while a web-backend track plays shows it; closing the web
       window does NOT silence playback
-- [ ] Ad blocking: web mode (logged out) shows no banner ads
+- [ ] Ad blocking: web mode (logged out) shows no banner ads; a video ad in web mode is
+      muted instantly and skipped within ~1s (in-page ad killer), not just on the backend
 - [ ] Backend-B track with a pre-roll ad: ad is MUTED ~instantly and skipped within <1s
       (no audible ad), then the real song plays at the set volume — NOT muted/stuck
 - [ ] Queue of all-blocked videos → stops after 3 consecutive skips with message (no infinite loop)
