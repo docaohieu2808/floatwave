@@ -1,28 +1,62 @@
-# Packaging Note (optional, not yet implemented)
+# Packaging Note
 
-v1 runs from source (`npm start`). To distribute a Windows build, use electron-builder:
+FloatWave currently targets Windows through `electron-builder` and NSIS.
+
+## Build
 
 ```powershell
-npm i -D electron-builder
+npm install
+npm run release:win
 ```
 
-`package.json` additions:
+This runs:
 
-```json
-{
-  "scripts": { "dist": "electron-builder --win" },
-  "build": {
-    "appId": "com.hieudc.youtube-music-miniplayer",
-    "files": ["main.js", "main/**", "preload.cjs", "index.html", "renderer/**"],
-    "win": { "target": ["nsis", "portable"] }
-  }
-}
+1. `npm run check`
+2. `npm run dist`
+3. `npm run checksum`
+
+Generated artifacts:
+
+- `dist/FloatWave Setup <version>.exe`
+- `dist/FloatWave Setup <version>.exe.blockmap`
+- `dist/latest.yml`
+- `dist/checksums.sha256`
+- `dist/win-unpacked/`
+
+## Code Signing
+
+The current local build is not signed unless a signing certificate is configured
+in the environment for `electron-builder`.
+
+Unsigned Windows apps can trigger SmartScreen warnings. For public releases,
+either:
+
+- keep releases clearly marked as unsigned community builds, or
+- configure Authenticode signing with a trusted certificate before publishing.
+
+Verify signing status:
+
+```powershell
+Get-AuthenticodeSignature "dist\FloatWave Setup 1.0.0.exe"
+Get-AuthenticodeSignature "dist\win-unpacked\FloatWave.exe"
 ```
 
-Then `npm run dist` → installer + portable exe in `dist/`.
+## Release Notes
 
-Notes:
-- `scripts/` (dev verification) and `plans/`/`docs/` should stay excluded from `files`.
-- No code signing configured — Windows SmartScreen will warn on first run.
-- electron-store data lives in `%APPDATA%/youtube-music-miniplayer/config.json` and
-  survives app updates.
+For GitHub Releases, include:
+
+- short description: lightweight unofficial floating mini-player
+- Windows version tested
+- installer file
+- `checksums.sha256`
+- SmartScreen note if unsigned
+- disclaimer that FloatWave is unofficial and not affiliated with YouTube,
+  Google, or YouTube Music
+
+Do not position the release as an official YouTube Music client.
+
+## Data Location
+
+`electron-store` writes app data under Electron's user data directory for
+FloatWave. Existing queues, favorites, playlists, volume, repeat mode, search
+history, and window preferences survive app updates.
