@@ -15,6 +15,7 @@ const SIZES = {
 
 let mainWindow = null;
 let lastPageUrl = null;
+let programmaticResize = false;
 
 export function createMainWindow(pageUrl = lastPageUrl) {
   lastPageUrl = pageUrl;
@@ -61,7 +62,9 @@ export function createMainWindow(pageUrl = lastPageUrl) {
   );
 
   // resizable:true is only for setContentSize — the user must not drag-resize
-  mainWindow.on('will-resize', (event) => event.preventDefault());
+  mainWindow.on('will-resize', (event) => {
+    if (!programmaticResize) event.preventDefault();
+  });
 
   mainWindow.setMenuBarVisibility(false);
   // Served over the loopback http origin — YouTube rejects file:// embeds
@@ -81,5 +84,12 @@ export function getMainWindow() {
 export function setCompactMode(compact) {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   const size = compact ? SIZES.compact : SIZES.full;
-  mainWindow.setContentSize(size.width, size.height);
+  programmaticResize = true;
+  try {
+    mainWindow.setContentSize(size.width, size.height);
+  } finally {
+    setImmediate(() => {
+      programmaticResize = false;
+    });
+  }
 }
