@@ -1,77 +1,121 @@
 # FloatWave
 
-**Stream video, float music.** A frameless, always-on-top floating YouTube mini-player
-for Windows. Plain Electron + vanilla JS — no bundler, no framework, no API key.
+FloatWave is a lightweight, unofficial floating mini-player for YouTube and
+YouTube Music on Windows. It is built with plain Electron and vanilla
+JavaScript, with no framework, no bundler, and no API key.
+
+This project is optimized for a small always-on-top player, global media
+controls, queue management, favorites, and low memory use compared with running
+a full YouTube Music web app window.
 
 <img src="assets/floatwave.png" alt="FloatWave" width="96" />
 
-![mini-player](plans/reports/e2e-screenshot.png)
+![mini-player](assets/screenshot.png)
+
+## Status
+
+FloatWave is a free, open-source, unofficial companion app. It is not affiliated
+with, endorsed by, or sponsored by YouTube, Google, or YouTube Music.
+
+Typical memory usage on the author's Windows test machine is around
+200-300 MB. Actual usage depends on Electron, Chromium, YouTube pages, playback
+mode, extensions, GPU state, and the current queue.
 
 ## Features
 
-- 340x420 frameless window, draggable titlebar, optional pin-on-top (📌 toggle, persisted)
-- **Minimize to system tray:** the minimize button hides to a tray icon (click to restore); X quits
-- **Focus mode:** compact titlebar-only view (340×116) — one-click collapse/expand, persisted
-- **Music ⇄ Video search toggle** (🎵/🎬 left of the search box): Music = YouTube Music
-  catalog (clean songs, mostly audio art-tracks); Video = real YouTube videos (MVs that
-  actually play video). Persists. Or paste any YouTube link.
-- **Web mode (♪):** embedded music.youtube.com in a floating window — sign in with your Google account, personal playlists/recommendations, login persists
-- Play queue: add (`+`), remove, prev/next, auto-advance on track end
-- Drag & drop reorder in every list — queue, favorites, playlists (tracks + playlist order), results
-- Repeat modes: off / one / all
-- Favorites with one-click toggle (♥) — dislike (👎) button skips + blocks re-suggestions
-- **Global hotkeys:** media keys (MediaPlayPause/Next/Prev) + Ctrl+Alt+Space/Right/Left work system-wide
-- **Smart suggestions:** radio/up-next re-ranks candidates — disliked/heavily-skipped dropped, liked artists boosted
-- **Search history:** last 10 queries accessible in dropdown when input is empty
-- **Waveform seek bar:** song-structure envelope + deterministic jitter for visual feedback
-- Seek bar, current/total time, volume slider
-- **Loudness matched:** embed playback is normalized up to YouTube's −14 dB target
-  (per-track Web Audio makeup gain) so quiet masters aren't quiet — matches the web backend
-- Everything persists across launches (queue, position, favorites, volume, repeat, focus mode, search history)
-- **Embed-blocked songs still play:** when the owner disables embedding, the **exact same
-  video** plays through a hidden music.youtube.com window (dual playback backend) — same
-  mini-player UI, queue, and hotkeys throughout (no substituting a different upload)
-- **Ad blocking:** uBO/EasyList filter lists at the network level (@ghostery/adblocker)
-  plus an in-player video-ad auto-skipper for the web backend
+- 340x420 frameless floating window with draggable titlebar.
+- Optional pin-on-top state, persisted across launches.
+- Minimize-to-tray support. The minimize button hides the window; the close
+  button quits the app.
+- Focus mode: compact 340x116 titlebar-and-controls view, persisted.
+- Music / Video search mode. Music mode targets YouTube Music song results;
+  Video mode targets normal YouTube video results. Pasted YouTube links are also
+  supported.
+- Web mode: opens music.youtube.com in a separate floating window so users can
+  sign in and use personal playlists or recommendations.
+- Queue, favorites, user playlists, repeat modes, drag-and-drop ordering, and
+  search history.
+- Global hotkeys: media keys and Ctrl+Alt+Space / Ctrl+Alt+Right /
+  Ctrl+Alt+Left.
+- Smart suggestions based on listening behavior, favorites, skips, and dislikes.
+- Waveform-style seek bar, seek, time display, and volume control.
+- Embed-fallback path for tracks that cannot play inside the YouTube iframe.
+- Network filtering and in-player ad handling are included as user-side
+  convenience features, but they are not the main project positioning.
 
-## Quick start
+## Privacy
+
+FloatWave does not run a custom backend and does not collect analytics.
+Playback, search, sign-in, and recommendations are provided by YouTube,
+YouTube Music, and the local Electron app runtime.
+
+Local app preferences are stored on the user's machine through `electron-store`.
+The YouTube Music web mode uses a persistent Electron session so Google sign-in
+can survive restarts.
+
+More detail: [PRIVACY.md](PRIVACY.md)
+
+## Quick Start
 
 ```powershell
 npm install
 npm start
 ```
 
-Dev mode (CDP debugging on port 9222):
+Dev mode with Chrome DevTools Protocol on port 9222:
 
 ```powershell
 npm run dev
 ```
 
-## How it works
+## Build A Windows Installer
 
-- **Main process (ESM):** [main.js](main.js) boots a loopback static server
-  ([main/local-server.js](main/local-server.js)) — YouTube rejects embeds from
-  `file://` origins (player errors 152/153), so the shell is served over
-  `http://127.0.0.1:<random port>`. Search runs in main via
-  [main/youtube-search.js](main/youtube-search.js); persistence via
-  `electron-store` in [main/store-manager.js](main/store-manager.js).
-- **Preload:** [preload.cjs](preload.cjs) exposes an allowlisted `window.api`
-  bridge (contextIsolation + sandbox enabled).
-- **Renderer (vanilla JS):** [renderer/app.js](renderer/app.js) bootstraps;
-  [renderer/player-controller.js](renderer/player-controller.js) wraps the
-  YouTube IFrame Player API; queue/search/favorites/error modules are isolated.
+```powershell
+npm install
+npm run release:win
+```
+
+Artifacts are written to `dist/`. The release script also writes
+`dist/checksums.sha256` for GitHub Releases.
+
+The installer is not code signed by default. Windows SmartScreen may warn users
+until the project has a trusted signing certificate and publisher reputation.
+
+## How It Works
+
+- Main process: [main.js](main.js) boots a loopback static server through
+  [main/local-server.js](main/local-server.js). YouTube embeds are served from a
+  local HTTP origin because `file://` embeds can be rejected by the player.
+  Search runs in [main/youtube-search.js](main/youtube-search.js); persistence
+  lives in [main/store-manager.js](main/store-manager.js).
+- Preload: [preload.cjs](preload.cjs) exposes an allowlisted `window.api`
+  bridge with context isolation and sandboxing enabled.
+- Renderer: [renderer/app.js](renderer/app.js) bootstraps the vanilla JS app.
+  Playback, queue, search, favorites, playlists, and error handling are split
+  across focused renderer modules.
 
 ## Verification
 
 ```powershell
-npm run check                      # syntax-check every JS file
-npm run dev                        # then, in another terminal:
-node scripts/verify-app.cjs        # IPC + store + search + player smoke test
-node scripts/e2e-playback-test.cjs # real playback e2e over CDP
-node scripts/e2e-feature-suite.cjs run  # full feature suite (backs up + restores your store);
-                                        # then restart the app and run:
-node scripts/e2e-feature-suite.cjs verify-restore  # session-restore check + store restore
+npm run check
+npm audit --omit=dev
+
+# Optional live tests. Start dev mode in one terminal:
+npm run dev
+
+# Then run smoke or e2e checks in another terminal:
+node scripts/verify-app.cjs
+node scripts/e2e-playback-test.cjs
+node scripts/e2e-feature-suite.cjs run
+
+# Restart the app, then verify session restore:
+node scripts/e2e-feature-suite.cjs verify-restore
 ```
 
-Manual checklist: [docs/manual-test-checklist.md](docs/manual-test-checklist.md)
-Packaging (optional): [docs/packaging-note.md](docs/packaging-note.md)
+Manual checklist: [docs/manual-test-checklist.md](docs/manual-test-checklist.md)  
+Packaging notes: [docs/packaging-note.md](docs/packaging-note.md)  
+Release checklist: [docs/release-checklist.md](docs/release-checklist.md)
+
+## License
+
+MIT. See [LICENSE](LICENSE).
