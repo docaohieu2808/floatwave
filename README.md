@@ -5,6 +5,8 @@
 ![Electron](https://img.shields.io/badge/Electron-41-47848F)
 ![No API key](https://img.shields.io/badge/API%20key-not%20required-success)
 
+![FloatWave — a floating mini-player for YouTube and YouTube Music](assets/hero.png)
+
 FloatWave is a lightweight, unofficial floating mini-player for YouTube and
 YouTube Music on Windows. It is built with plain Electron and vanilla
 JavaScript, with no framework, no bundler, and no API key.
@@ -12,10 +14,6 @@ JavaScript, with no framework, no bundler, and no API key.
 This project is optimized for a small always-on-top player, global media
 controls, queue management, favorites, and low memory use compared with running
 a full YouTube Music web app window.
-
-<img src="assets/floatwave.png" alt="FloatWave" width="96" />
-
-![mini-player](assets/screenshot.png)
 
 ## Status
 
