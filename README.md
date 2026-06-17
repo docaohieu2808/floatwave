@@ -1,5 +1,10 @@
 # FloatWave
 
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Windows-0078D6)
+![Electron](https://img.shields.io/badge/Electron-41-47848F)
+![No API key](https://img.shields.io/badge/API%20key-not%20required-success)
+
 FloatWave is a lightweight, unofficial floating mini-player for YouTube and
 YouTube Music on Windows. It is built with plain Electron and vanilla
 JavaScript, with no framework, no bundler, and no API key.
@@ -20,6 +25,23 @@ with, endorsed by, or sponsored by YouTube, Google, or YouTube Music.
 Typical memory usage on the author's Windows test machine is around
 200-300 MB. Actual usage depends on Electron, Chromium, YouTube pages, playback
 mode, extensions, GPU state, and the current queue.
+
+## Disclaimer
+
+FloatWave is a personal, educational, unofficial client. It is **not affiliated
+with, endorsed by, or sponsored by Google, YouTube, or YouTube Music**.
+
+- All audio, video, search, and recommendations are served by YouTube / YouTube
+  Music. FloatWave does **not** host, download, or redistribute any content — it
+  is only a client that plays what those services already provide.
+- The optional ad-filtering / ad-skipping behavior is provided as-is for personal
+  convenience. Running a client that blocks ads or alters playback may conflict
+  with the YouTube Terms of Service. **You are responsible for how you use it.**
+- Provided "AS IS", without warranty of any kind (see [LICENSE](LICENSE)). Use at
+  your own risk.
+
+If you enjoy the music, please support the artists and the platform (for example,
+with YouTube Premium).
 
 ## Features
 
@@ -115,6 +137,13 @@ node scripts/e2e-feature-suite.cjs verify-restore
 Manual checklist: [docs/manual-test-checklist.md](docs/manual-test-checklist.md)  
 Packaging notes: [docs/packaging-note.md](docs/packaging-note.md)  
 Release checklist: [docs/release-checklist.md](docs/release-checklist.md)
+
+## Contributing
+
+Issues and pull requests are welcome. FloatWave leans on YouTube / YouTube Music
+internals (via `youtubei.js` and the YT Music web app), so things occasionally
+break when those change — bug reports with clear steps to reproduce are
+especially helpful. Please run `npm run check` before opening a PR.
 
 ## License
 
