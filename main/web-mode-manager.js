@@ -47,6 +47,48 @@ export function setPlaybackGuard(fn) {
   playbackGuard = fn;
 }
 
+// ---------- Idle reclaim of the hidden music.youtube.com window ----------
+// That window costs ~145MB. When it is NEITHER showing (web mode) NOR playing
+// audio (backend B), free it after a grace period and recreate on demand:
+//   - login + disk cache survive via the persist:ytmusic partition, and
+//   - the network ad-blocker is bound to that SESSION, not the window,
+// so reclaiming then recreating loses neither (ad-skippers re-arm per load).
+// The grace window is well above a track-to-track gap, so back-to-back
+// backend-B songs keep the window warm exactly like before — only a genuinely
+// unused window is released.
+const IDLE_FREE_MS = 60000; // must exceed any normal gap between backend-B tracks
+const IDLE_CHECK_MS = 15000;
+let idleSince = null; // ms timestamp the window went idle, or null
+let idleMonitor = null; // single low-frequency interval
+let freeingIdle = false; // true only while WE destroy the idle window
+
+function webWindowIdle() {
+  return (
+    !!webWindow &&
+    !webWindow.isDestroyed() &&
+    !webWindow.isVisible() && // not in web mode
+    !playbackGuard() // backend B is not the active audio
+  );
+}
+
+function startIdleMonitor() {
+  if (idleMonitor) return;
+  idleMonitor = setInterval(() => {
+    if (!webWindowIdle()) {
+      idleSince = null; // gone, shown, or playing — keep it alive
+      return;
+    }
+    if (idleSince === null) {
+      idleSince = Date.now(); // start the clock
+      return;
+    }
+    if (Date.now() - idleSince < IDLE_FREE_MS) return; // not idle long enough yet
+    idleSince = null;
+    freeingIdle = true;
+    webWindow.destroy(); // 'closed' clears the ref; freeingIdle skips the resurface
+  }, IDLE_CHECK_MS);
+}
+
 function pauseWebPlayback() {
   webWindow?.webContents
     .executeJavaScript('document.querySelector("video")?.pause()', true)
@@ -104,9 +146,16 @@ function getWebWindow(miniWin) {
     event.preventDefault();
     exitWebMode(miniWindow);
   });
-  // Destroyed externally (devtools, crash) — drop the ref and resurface mini
+  // Destroyed externally (devtools, crash) OR by our idle reclaim — drop the ref.
   webWindow.on('closed', () => {
     webWindow = null;
+    // Idle reclaim: we deliberately freed an unused HIDDEN window — the mini
+    // player is already the live UI, so do NOT show()/resync it (that would
+    // yank it out of the tray). Only an external death should resurface mini.
+    if (freeingIdle) {
+      freeingIdle = false;
+      return;
+    }
     if (miniWindow && !miniWindow.isDestroyed()) {
       miniWindow.show();
       miniWindow.webContents.send('mode:exited');
@@ -114,10 +163,14 @@ function getWebWindow(miniWin) {
   });
   // Mini window closed = app quitting → release the web window for real
   miniWin.once('closed', () => {
+    clearInterval(idleMonitor);
+    idleMonitor = null;
     webWindow?.destroy();
     webWindow = null;
   });
 
+  idleSince = null; // fresh window: clear any stale idle countdown
+  startIdleMonitor(); // begin watching this window for reclaim eligibility
   return webWindow;
 }
 
