@@ -35,6 +35,8 @@ Run with `npm start`. Automated coverage: `npm run check`, `scripts/verify-app.c
       no "search failed" (youtubei.js video search, youtube-sr removed)
 - [ ] Click result → plays now; "+" → appends to queue without interrupting
 - [ ] Search history: focus empty search input → dropdown shows last 10 queries; click to search
+- [ ] Search suggestions: typing (e.g. "mộng") shows live suggestions (incl. song titles),
+      correct Vietnamese diacritics (no "�"); clicking one searches it
 - [ ] Queue tab: current highlighted; ✕ removes row; index stays correct
 - [ ] Drag & drop reorder works in ALL four tabs: queue (persists, current-track pointer follows), favorites (persists), playlists (both playlist order and tracks inside, persist), results (display order only)
 - [ ] Track end auto-advances; repeat `one` repeats; repeat `all` wraps at end

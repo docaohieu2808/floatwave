@@ -57,6 +57,41 @@ async function searchVideosFallback(query) {
     .slice(0, RESULT_LIMIT);
 }
 
+// Search-as-you-type suggestions (keyless): typing "mộng" → ["mộng hoa sim",
+// "mộng chiều xuân", "Mộng Chiều Xuân", …]. Uses the YT MUSIC suggestion
+// endpoint (InnerTube JSON) rather than the legacy complete/search one: it's
+// proper UTF-8 (the legacy one mangles e.g. "â" → U+FFFD) AND song-oriented —
+// it returns both query suggestions and real song titles. Works for both modes
+// (a suggestion is just a query string). Never throws.
+export async function getSuggestions(query) {
+  const q = String(query ?? '').trim();
+  if (!q) return { ok: true, suggestions: [] };
+  try {
+    const yt = await getInnertube();
+    const result = await yt.music.getSearchSuggestions(q);
+    const sections = Array.isArray(result)
+      ? result
+      : Object.values(result ?? {}).filter((x) => x && Array.isArray(x.contents));
+    const seen = new Set();
+    const suggestions = [];
+    for (const section of sections) {
+      for (const item of section.contents ?? []) {
+        // SearchSuggestion → .suggestion ; song/artist entity → .title
+        const text = (item?.suggestion?.toString?.() ?? item?.title?.toString?.() ?? '').trim();
+        const key = text.toLowerCase();
+        if (text && !text.includes('�') && !seen.has(key)) {
+          seen.add(key);
+          suggestions.push(text);
+          if (suggestions.length >= 10) return { ok: true, suggestions };
+        }
+      }
+    }
+    return { ok: true, suggestions };
+  } catch (err) {
+    return { ok: false, error: String(err?.message ?? err) };
+  }
+}
+
 // YouTube Music "up next" radio for a seed track — powers playlist-like
 // auto-advance: clicking a song builds a related-songs queue, and when the
 // queue runs out the app extends it with the last track's radio.

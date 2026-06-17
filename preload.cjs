@@ -5,6 +5,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('api', {
   ping: () => ipcRenderer.invoke('app:ping'),
   search: (query, mode) => ipcRenderer.invoke('search:youtube', query, mode),
+  searchSuggest: (query) => ipcRenderer.invoke('search:suggest', query),
   getUpNext: (videoId) => ipcRenderer.invoke('radio:up-next', videoId),
   setGain: (value, build) => ipcRenderer.invoke('player:set-gain', value, build),
   getStore: (key) => ipcRenderer.invoke('store:get', key),

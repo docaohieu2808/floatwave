@@ -8,10 +8,12 @@ import { openAddChooser } from './playlists-ui.js';
 import { ICONS } from './icons.js';
 
 const HISTORY_LIMIT = 10;
+const SUGGEST_DEBOUNCE_MS = 220;
 
 let lastResults = [];
 let history = []; // recent query strings, most recent first
 let searchMode = 'music'; // 'music' (YT Music songs) | 'video' (real videos)
+let suggestTimer = null;
 
 function renderSearchModeButton() {
   const isVideo = searchMode === 'video';
@@ -42,12 +44,9 @@ export async function initSearch() {
     handleSubmit(els.searchInput.value);
   });
 
-  // history dropdown: visible while the input is focused and empty
-  els.searchInput.addEventListener('focus', () => renderHistory());
-  els.searchInput.addEventListener('input', () => {
-    if (els.searchInput.value.trim()) hideHistory();
-    else renderHistory();
-  });
+  // dropdown: recent searches when empty, live suggestions while typing
+  els.searchInput.addEventListener('focus', () => updateDropdown());
+  els.searchInput.addEventListener('input', () => updateDropdown());
   // blur fires before the row's click — let the click land first
   els.searchInput.addEventListener('blur', () => setTimeout(hideHistory, 150));
 
@@ -61,42 +60,83 @@ export async function initSearch() {
 }
 
 function hideHistory() {
+  clearTimeout(suggestTimer);
   els.searchHistory.classList.add('hidden');
+}
+
+// Empty input → recent searches; typed text → debounced live suggestions.
+// (URL/ID pastes get no dropdown — they play directly on Enter.)
+function updateDropdown() {
+  const text = els.searchInput.value.trim();
+  clearTimeout(suggestTimer);
+  if (!text) return renderHistory();
+  if (parseVideoId(text) || isLikelyUrl(text)) return hideHistory();
+  suggestTimer = setTimeout(async () => {
+    const res = await window.api.searchSuggest(text).catch(() => null);
+    // ignore stale responses — the box may have changed while we waited
+    if (els.searchInput.value.trim() !== text) return;
+    if (res?.ok && res.suggestions.length) renderSuggestions(res.suggestions);
+    else hideHistory();
+  }, SUGGEST_DEBOUNCE_MS);
+}
+
+// One clickable row (icon + text). onPick runs the search; onRemove (optional)
+// adds a ✕ that deletes the entry without closing the dropdown.
+function dropdownRow(icon, text, onPick, onRemove) {
+  const row = document.createElement('div');
+  row.className = 'history-row';
+  const pick = document.createElement('button');
+  pick.className = 'history-pick';
+  pick.innerHTML = icon; // trusted SVG constant from icons.js
+  pick.appendChild(document.createTextNode(text));
+  pick.addEventListener('click', () => onPick());
+  row.appendChild(pick);
+  if (onRemove) {
+    const remove = document.createElement('button');
+    remove.className = 'history-remove';
+    remove.innerHTML = ICONS.close;
+    remove.title = 'Remove from recent searches';
+    // keep focus so the blur-hide doesn't fire — delete several in a row
+    remove.addEventListener('mousedown', (event) => event.preventDefault());
+    remove.addEventListener('click', (event) => {
+      event.stopPropagation();
+      onRemove();
+    });
+    row.appendChild(remove);
+  }
+  return row;
+}
+
+function renderSuggestions(suggestions) {
+  els.searchHistory.textContent = '';
+  for (const s of suggestions) {
+    els.searchHistory.appendChild(
+      dropdownRow(ICONS.search, s, () => {
+        els.searchInput.value = s;
+        hideHistory();
+        runSearch(s);
+      })
+    );
+  }
+  els.searchHistory.classList.remove('hidden');
 }
 
 function renderHistory() {
   if (!history.length || els.searchInput.value.trim()) return hideHistory();
   els.searchHistory.textContent = '';
   for (const query of history) {
-    const row = document.createElement('div');
-    row.className = 'history-row';
-
-    // pick: icon + query text → runs the search
-    const pick = document.createElement('button');
-    pick.className = 'history-pick';
-    pick.innerHTML = ICONS.history; // trusted SVG constant
-    pick.appendChild(document.createTextNode(query));
-    pick.addEventListener('click', () => {
-      els.searchInput.value = query;
-      hideHistory();
-      runSearch(query);
-    });
-
-    // remove (✕): drop just this query, keep the dropdown open for more
-    const remove = document.createElement('button');
-    remove.className = 'history-remove';
-    remove.innerHTML = ICONS.close;
-    remove.title = 'Remove from recent searches';
-    // mousedown-preventDefault keeps the input focused so the dropdown's
-    // blur-hide doesn't fire — the user can delete several in a row
-    remove.addEventListener('mousedown', (event) => event.preventDefault());
-    remove.addEventListener('click', (event) => {
-      event.stopPropagation();
-      removeFromHistory(query);
-    });
-
-    row.append(pick, remove);
-    els.searchHistory.appendChild(row);
+    els.searchHistory.appendChild(
+      dropdownRow(
+        ICONS.history,
+        query,
+        () => {
+          els.searchInput.value = query;
+          hideHistory();
+          runSearch(query);
+        },
+        () => removeFromHistory(query) // ✕ removes just this recent search
+      )
+    );
   }
   els.searchHistory.classList.remove('hidden');
 }
