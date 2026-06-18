@@ -1,7 +1,7 @@
 {
   "name": "floatwave",
   "productName": "FloatWave",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Lightweight unofficial floating mini-player for YouTube and YouTube Music.",
   "author": "hieudc",
   "main": "main.js",
