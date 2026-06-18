@@ -14,6 +14,7 @@ const DEFAULTS = {
   searchMode: 'music', // 'music' (YT Music songs) | 'video' (real YouTube videos)
   trackStats: {}, // id → {plays,skips,earlySkips,disliked,artist,lastAt} (recommendation scoring)
   webOnlyIds: [], // tracks proven unplayable in embeds → route straight to the web backend
+  windowSize: { width: 340, height: 420 }, // remembered free-resize size of the mini window (content px)
 };
 
 // Keys the renderer is allowed to read/write over IPC

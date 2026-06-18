@@ -501,9 +501,33 @@ input[type="range"]:hover::-webkit-slider-thumb { opacity: 1; }
 #seek {
   height: 22px;
   border-radius: 0;
-  --fill-color: #3a3a40; /* played portion is dark in Roon's waveform */
-  --range-track: rgba(0, 0, 0, 0.16);
+  --fill-color: var(--accent); /* played portion in the accent — Roon-style pop */
+  --range-track: rgba(0, 0, 0, 0.14); /* unplayed bars, soft grey */
 }
 #seek::-webkit-slider-thumb { opacity: 0 !important; } /* waveform has no thumb */
+
+/* Bottom-corner resize grips — the only resize affordance (native edges blocked).
+   Diagonal hatch lines in each corner; drag to scale the window in 16:9. */
+.resize-grip {
+  position: fixed;
+  bottom: 0;
+  width: 11px;
+  height: 11px;
+  z-index: 45; /* above the panel (10), below the chooser modal (50) */
+  -webkit-app-region: no-drag;
+  opacity: 0.35;
+}
+.resize-grip:hover { opacity: 0.8; }
+#resize-grip-right {
+  right: 0;
+  cursor: nwse-resize; /* ↘ */
+  background-image: repeating-linear-gradient(-45deg, var(--fg-dim) 0 1px, transparent 1px 3px);
+}
+#resize-grip-left {
+  left: 0;
+  cursor: nesw-resize; /* ↙ */
+  background-image: repeating-linear-gradient(45deg, var(--fg-dim) 0 1px, transparent 1px 3px);
+}
+body.focus-mode .resize-grip { display: none; } /* no resizing in the compact bar */
 
 .hidden { display: none !important; }

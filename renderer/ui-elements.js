@@ -14,6 +14,8 @@ export const els = {
   btnMinimize: $('btn-minimize'),
   btnClose: $('btn-close'),
   btnFocusMode: $('btn-focus-mode'),
+  resizeGripLeft: $('resize-grip-left'),
+  resizeGripRight: $('resize-grip-right'),
   btnSearchMode: $('btn-search-mode'),
   searchInput: $('search-input'),
   searchHistory: $('search-history'),

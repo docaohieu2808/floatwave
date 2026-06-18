@@ -9,7 +9,7 @@ import {
 import {
   initWebPlayback, isWebPlaybackActive, webPlayLoad, webPlayControl, stopWebPlayback,
 } from './web-playback-backend.js';
-import { setCompactMode } from './window-manager.js';
+import { setCompactMode, resetSize, resizeVideo } from './window-manager.js';
 import { applyEmbedLoudness } from './embed-loudness.js';
 
 // Only allow opening canonical YouTube watch URLs externally
@@ -53,6 +53,15 @@ export function registerIpc(win) {
     getStore().set('focusMode', flag);
     return flag;
   });
+
+  // Snap the window back to the default mini-player size (also exits focus mode)
+  ipcMain.handle('win:reset-size', () => {
+    resetSize();
+    return true;
+  });
+
+  // Corner-grip drag → ratio-locked resize (fire-and-forget, high frequency)
+  ipcMain.on('win:resize-video', (_event, width, anchorRight) => resizeVideo(width, anchorRight));
 
   ipcMain.handle('store:get', (_event, key) => {
     if (!STORE_KEYS.has(key)) return undefined;

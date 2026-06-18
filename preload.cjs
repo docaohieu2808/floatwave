@@ -29,5 +29,8 @@ contextBridge.exposeInMainWorld('api', {
     close: () => ipcRenderer.invoke('win:close'),
     setPin: (pinned) => ipcRenderer.invoke('win:set-pin', pinned),
     setCompact: (compact) => ipcRenderer.invoke('win:set-compact', compact),
+    resetSize: () => ipcRenderer.invoke('win:reset-size'),
+    // high-frequency during a grip drag → fire-and-forget send, not invoke
+    resizeVideo: (width, anchorRight) => ipcRenderer.send('win:resize-video', width, anchorRight),
   },
 });
