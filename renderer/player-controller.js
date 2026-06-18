@@ -58,8 +58,10 @@ export function initPlayer() {
         events: {
           onReady: () => resolve(),
           onStateChange: (event) => {
-            if (event.data === STATE.PLAYING) startTick();
-            else stopTick();
+            if (event.data === STATE.PLAYING) {
+              startTick();
+              player?.setPlaybackQuality?.(SUGGESTED_QUALITY); // nudge HD once playing
+            } else stopTick();
             if (event.data === STATE.ENDED || event.data === STATE.CUED) emitTick();
             emit('statechange', event.data);
           },
@@ -77,10 +79,20 @@ export function initPlayer() {
   return readyPromise;
 }
 
+// YouTube ultimately auto-selects quality, but suggestedQuality nudges the embed
+// toward HD instead of the low default it tends to pick for a small player.
+const SUGGESTED_QUALITY = 'hd1080';
+
 export function load(videoId, { autoplay = true } = {}) {
   // optional-chained: methods don't exist until onReady fires
-  if (autoplay) player?.loadVideoById?.(videoId);
-  else player?.cueVideoById?.(videoId); // restore-on-boot: cue, don't blast audio
+  if (autoplay) player?.loadVideoById?.({ videoId, suggestedQuality: SUGGESTED_QUALITY });
+  else player?.cueVideoById?.({ videoId, suggestedQuality: SUGGESTED_QUALITY }); // boot: cue, no audio
+}
+
+// Re-suggest HD (e.g. after the window is enlarged). Deprecated by YouTube but
+// harmless — a hint at worst.
+export function nudgeQuality() {
+  player?.setPlaybackQuality?.(SUGGESTED_QUALITY);
 }
 
 export function stop() {

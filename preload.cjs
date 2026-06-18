@@ -32,5 +32,9 @@ contextBridge.exposeInMainWorld('api', {
     resetSize: () => ipcRenderer.invoke('win:reset-size'),
     // high-frequency during a grip drag → fire-and-forget send, not invoke
     resizeVideo: (width, anchorRight) => ipcRenderer.send('win:resize-video', width, anchorRight),
+    setImmersive: (on) => ipcRenderer.send('win:immersive', on),
+    // drag the window by the video (press-and-hold); main follows the cursor
+    dragStart: () => ipcRenderer.send('win:drag-start'),
+    dragEnd: () => ipcRenderer.send('win:drag-end'),
   },
 });

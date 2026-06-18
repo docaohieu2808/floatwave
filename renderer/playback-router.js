@@ -140,3 +140,8 @@ export function getVideoData() {
 export function initPlayer() {
   return iframePlayer.initPlayer();
 }
+
+// Re-suggest HD to the iframe embed (web backend has no quality control)
+export function nudgeQuality() {
+  if (mode === 'iframe') iframePlayer.nudgeQuality();
+}

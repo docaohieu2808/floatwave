@@ -1,5 +1,5 @@
 // Creates the single fixed-size frameless always-on-top mini-player window.
-import { BrowserWindow, screen } from 'electron';
+import { BrowserWindow, screen, Menu } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getStore } from './store-manager.js';
@@ -18,6 +18,7 @@ const MIN = { width: 300, height: 110 };
 // Non-video chrome rows (titlebar 36 + search 44 + controls 80). Excluded from
 // the 16:9 aspect lock so the VIDEO area — not the whole window — keeps ratio.
 const CHROME_H = 36 + 44 + 80;
+const TOP_CHROME = 36 + 44; // titlebar + search — the chrome ABOVE the video
 
 let mainWindow = null;
 let lastPageUrl = null;
@@ -25,6 +26,7 @@ let isCompact = false; // true while in focus mode (compact bar)
 let normalSize = { ...SIZES.full }; // last non-compact size, restored on focus exit
 let persistTimer = null;
 let programmaticResize = false; // true only while WE setContentSize (focus/reset/grip)
+let immersive = false; // cinema mode: chrome hidden, window tightened to the video
 
 export function createMainWindow(pageUrl = lastPageUrl) {
   lastPageUrl = pageUrl;
@@ -75,6 +77,19 @@ export function createMainWindow(pageUrl = lastPageUrl) {
   mainWindow.webContents.session.setPermissionRequestHandler((_wc, _permission, callback) =>
     callback(false)
   );
+
+  // Right-click an input → native context menu with Paste, so a YouTube link can
+  // be dropped into the search box without reaching for Ctrl+V.
+  mainWindow.webContents.on('context-menu', (_event, params) => {
+    if (!params.isEditable) return;
+    Menu.buildFromTemplate([
+      { role: 'cut' },
+      { role: 'copy' },
+      { role: 'paste' },
+      { type: 'separator' },
+      { role: 'selectAll' },
+    ]).popup({ window: mainWindow });
+  });
 
   // Floor so a resize can't collapse the layout. Below the compact height so
   // focus mode's setContentSize is never clamped.
@@ -172,4 +187,57 @@ export function resizeVideo(width, anchorRight = false) {
   }
   normalSize = { width: w, height: h };
   persistNormalSize();
+}
+
+// Cinema mode: hide the chrome rows (renderer) and tighten the window down to
+// just the 16:9 video so the picture keeps filling — no letterbox. Top-left
+// stays put; on exit we re-add the chrome height and nudge back on-screen if the
+// taller window would spill below the work area. Does NOT touch normalSize, so
+// it's a pure view toggle (the remembered size is still the chrome-on size).
+export function setImmersive(on) {
+  if (!mainWindow || mainWindow.isDestroyed() || isCompact) return;
+  if (!!on === immersive) return;
+  immersive = !!on;
+  const b = mainWindow.getContentBounds();
+  // Shift Y by the top-chrome height so the VIDEO stays at the exact same screen
+  // spot — it must never jump. Deliberately NO on-screen clamp: if the restored
+  // chrome spills past a screen edge, leave it; the user drags the window back
+  // rather than have the video shoved around.
+  const dy = immersive ? TOP_CHROME : -TOP_CHROME;
+  const dh = immersive ? -CHROME_H : CHROME_H;
+  programmaticResize = true;
+  mainWindow.setContentBounds({ x: b.x, y: b.y + dy, width: b.width, height: b.height + dh });
+  setImmediate(() => {
+    programmaticResize = false;
+  });
+}
+
+// Drag-to-move from the video layer (#player-drag). The renderer only signals
+// start/end; MAIN follows the OS cursor itself (getCursorScreenPoint), which is
+// in the SAME DIP space as getBounds — so there's no renderer-screenX vs
+// window-DIP scaling mismatch (that mismatch made the window balloon / fly off
+// on a HiDPI display). Size is preserved explicitly; only x/y change, and the
+// cursor is hand-driven so moving the window can't feed back into the position.
+let dragTimer = null;
+export function beginWindowDrag() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  endWindowDrag();
+  const start = mainWindow.getBounds();
+  const cursorStart = screen.getCursorScreenPoint();
+  dragTimer = setInterval(() => {
+    if (!mainWindow || mainWindow.isDestroyed()) return endWindowDrag();
+    const c = screen.getCursorScreenPoint();
+    mainWindow.setBounds({
+      x: start.x + (c.x - cursorStart.x),
+      y: start.y + (c.y - cursorStart.y),
+      width: start.width,
+      height: start.height,
+    });
+  }, 16);
+}
+export function endWindowDrag() {
+  if (dragTimer) {
+    clearInterval(dragTimer);
+    dragTimer = null;
+  }
 }

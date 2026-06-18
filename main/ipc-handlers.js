@@ -9,7 +9,9 @@ import {
 import {
   initWebPlayback, isWebPlaybackActive, webPlayLoad, webPlayControl, stopWebPlayback,
 } from './web-playback-backend.js';
-import { setCompactMode, resetSize, resizeVideo } from './window-manager.js';
+import {
+  setCompactMode, resetSize, resizeVideo, setImmersive, beginWindowDrag, endWindowDrag,
+} from './window-manager.js';
 import { applyEmbedLoudness } from './embed-loudness.js';
 
 // Only allow opening canonical YouTube watch URLs externally
@@ -62,6 +64,13 @@ export function registerIpc(win) {
 
   // Corner-grip drag → ratio-locked resize (fire-and-forget, high frequency)
   ipcMain.on('win:resize-video', (_event, width, anchorRight) => resizeVideo(width, anchorRight));
+
+  // Cinema mode toggle (renderer's idle/hover logic decides when)
+  ipcMain.on('win:immersive', (_event, on) => setImmersive(on));
+
+  // Drag the window by the video layer (press-and-hold; main follows the cursor)
+  ipcMain.on('win:drag-start', () => beginWindowDrag());
+  ipcMain.on('win:drag-end', () => endWindowDrag());
 
   ipcMain.handle('store:get', (_event, key) => {
     if (!STORE_KEYS.has(key)) return undefined;

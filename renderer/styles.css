@@ -530,4 +530,24 @@ input[type="range"]:hover::-webkit-slider-thumb { opacity: 1; }
 }
 body.focus-mode .resize-grip { display: none; } /* no resizing in the compact bar */
 
+/* ---------- Cinema mode: chrome hidden, window tightened to the video ----------
+   Main shrinks the window to the 16:9 video; here we just hide the chrome. The
+   iframe swallows mouse moves, so two thin hover zones over the video's top/
+   bottom edges bring the chrome back. */
+body.immersive #titlebar,
+body.immersive #search-bar,
+body.immersive #controls,
+body.immersive .resize-grip { display: none; }
+
+/* Transparent layer over the video. JS (player-drag.js) tells a click (toggle
+   play/pause) from a press-and-drag (move the window). Sits OVER the iframe but
+   UNDER every overlay (brand splash z4 / fallback z5 / web-art z6 / panel z10) so
+   those stay clickable. */
+#player-drag {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+}
+
+
 .hidden { display: none !important; }
