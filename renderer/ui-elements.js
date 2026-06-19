@@ -13,6 +13,13 @@ export const els = {
   btnPanel: $('btn-panel'),
   btnMinimize: $('btn-minimize'),
   btnClose: $('btn-close'),
+  btnInfo: $('btn-info'),
+  aboutDialog: $('about-dialog'),
+  aboutVersion: $('about-version'),
+  aboutAuthor: $('about-author'),
+  aboutLicense: $('about-license'),
+  aboutRepo: $('about-repo'),
+  aboutClose: $('about-close'),
   btnFocusMode: $('btn-focus-mode'),
   btnCinema: $('btn-cinema'),
   resizeGripLeft: $('resize-grip-left'),
@@ -76,6 +83,7 @@ export function applyStaticIcons() {
   els.btnCinema.innerHTML = ICONS.cinema;
   els.btnWebMode.innerHTML = ICONS.musicNote;
   els.btnPanel.innerHTML = ICONS.queueList;
+  els.btnInfo.innerHTML = ICONS.info;
   els.btnMinimize.innerHTML = ICONS.minimize;
   els.btnClose.innerHTML = ICONS.close;
   els.btnPanelClose.innerHTML = ICONS.close;

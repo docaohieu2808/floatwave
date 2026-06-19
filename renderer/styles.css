@@ -229,6 +229,9 @@ button svg, .icon svg {
   gap: 2px;
   background: var(--bg);
   z-index: 4;
+  /* decorative only — let the #player-drag layer beneath catch drag/click/
+     double-click so the window is movable (and cinema toggles) even while idle */
+  pointer-events: none;
 }
 #brand-logo {
   width: 92px;
@@ -255,6 +258,9 @@ button svg, .icon svg {
   background: #000;
   overflow: hidden;
   z-index: 6;
+  /* decorative only (album art for backend B) — pass drag/click/double-click
+     through to #player-drag so window-move + cinema work while it plays */
+  pointer-events: none;
 }
 /* blurred, dimmed cover fill behind the crisp art (no black bars) */
 #web-art-bg {
@@ -422,6 +428,68 @@ button svg, .icon svg {
   border-radius: 14px; /* Roon pill */
 }
 #chooser-create:hover { background: #8f90ee; }
+
+/* ---------- About dialog ---------- */
+#about-dialog {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 20, 24, 0.35);
+  z-index: 50;
+}
+#about-box {
+  width: 256px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  padding: 18px 16px;
+}
+#about-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+}
+#about-name { font-weight: 700; font-size: 17px; }
+#about-version { color: var(--fg-dim); font-size: 12px; }
+#about-desc {
+  font-size: 12px;
+  color: var(--fg-dim);
+  line-height: 1.45;
+  margin: 4px 0;
+}
+#about-meta {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 14px;
+  font-size: 12px;
+}
+#about-meta span:nth-child(odd) { color: var(--fg-dim); text-align: right; }
+#about-repo { font-size: 12px; color: var(--accent); text-decoration: none; cursor: pointer; }
+#about-repo:hover { text-decoration: underline; }
+#about-disclaimer {
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  line-height: 1.35;
+  margin-top: 2px;
+}
+#about-close {
+  margin-top: 10px;
+  height: 28px;
+  padding: 0 18px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 14px;
+}
+#about-close:hover { background: #8f90ee; }
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.18); border-radius: 3px; }

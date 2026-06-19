@@ -25,6 +25,7 @@
       <button id="btn-cinema" title="Cinema mode — hide bars (double-click the video to exit)"></button>
       <button id="btn-web-mode" title="YouTube Music (web)"></button>
       <button id="btn-panel" title="Queue / Favorites"></button>
+      <button id="btn-info" title="About FloatWave"></button>
       <button id="btn-minimize" title="Minimize"></button>
       <button id="btn-close" title="Close"></button>
     </div>
@@ -93,6 +94,23 @@
           <input id="chooser-new-name" type="text" placeholder="New playlist name&hellip;" spellcheck="false" />
           <button id="chooser-create">Create</button>
         </div>
+      </div>
+    </div>
+
+    <!-- About: version / author / license / links -->
+    <div id="about-dialog" class="hidden">
+      <div id="about-box">
+        <img id="about-logo" src="assets/floatwave.png" alt="FloatWave" />
+        <div id="about-name">FloatWave</div>
+        <div id="about-version">&mdash;</div>
+        <p id="about-desc">A lightweight, unofficial floating mini-player for YouTube &amp; YouTube Music.</p>
+        <div id="about-meta">
+          <span>Author</span><span id="about-author">&mdash;</span>
+          <span>License</span><span id="about-license">&mdash;</span>
+        </div>
+        <a id="about-repo" href="#">github.com/docaohieu2808/floatwave</a>
+        <p id="about-disclaimer">Unofficial &mdash; not affiliated with YouTube, Google, or YouTube Music.</p>
+        <button id="about-close">Close</button>
       </div>
     </div>
   </main>

@@ -1,5 +1,5 @@
 // All ipcMain handlers — window controls, search, store get/set, open-external.
-import { ipcMain, shell } from 'electron';
+import { app, ipcMain, shell } from 'electron';
 import { searchYouTube, getSuggestions, getUpNextTracks } from './youtube-search.js';
 import { getStore, STORE_KEYS } from './store-manager.js';
 import {
@@ -16,6 +16,8 @@ import { applyEmbedLoudness } from './embed-loudness.js';
 
 // Only allow opening canonical YouTube watch URLs externally
 const YT_WATCH_RE = /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}$/;
+// The project's own repo — the only non-watch URL the About dialog may open
+const REPO_URL = 'https://github.com/docaohieu2808/floatwave';
 
 export function registerIpc(win) {
   // backend B (hidden music.youtube.com playback for embed-blocked tracks)
@@ -23,6 +25,16 @@ export function registerIpc(win) {
   setPlaybackGuard(isWebPlaybackActive); // exiting web mode must not silence it
 
   ipcMain.handle('app:ping', () => 'pong');
+
+  // About dialog: version is the real packaged one (app.getVersion); the rest
+  // are static project facts.
+  ipcMain.handle('app:info', () => ({
+    name: 'FloatWave',
+    version: app.getVersion(),
+    author: 'hieudc',
+    license: 'MIT',
+    repo: REPO_URL,
+  }));
 
   ipcMain.handle('webplay:load', (_event, videoId, volume) => webPlayLoad(videoId, volume));
   ipcMain.handle('webplay:control', (_event, action, value) => webPlayControl(action, value));
@@ -109,7 +121,7 @@ export function registerIpc(win) {
   });
 
   ipcMain.handle('app:open-external', (_event, url) => {
-    if (typeof url === 'string' && YT_WATCH_RE.test(url)) {
+    if (typeof url === 'string' && (YT_WATCH_RE.test(url) || url === REPO_URL)) {
       shell.openExternal(url);
       return true;
     }

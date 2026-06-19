@@ -15,6 +15,7 @@ import { initFocusMode } from './focus-mode.js';
 import { initResizeGrip } from './resize-grip.js';
 import { initImmersive } from './immersive-mode.js';
 import { initPlayerDrag } from './player-drag.js';
+import { initAbout } from './about-dialog.js';
 import { applyWaveformMask } from './waveform.js';
 import { formatTime } from './format-utils.js';
 import {
@@ -337,6 +338,7 @@ function boot() {
   initResizeGrip();
   initImmersive();
   initPlayerDrag();
+  initAbout();
   // re-render the waveform at the new pitch when the window is resized so the
   // bars stay fine/even at any size (mask would otherwise just stretch)
   let waveRaf = 0;

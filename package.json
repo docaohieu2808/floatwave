@@ -1,7 +1,7 @@
 {
   "name": "floatwave",
   "productName": "FloatWave",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "description": "Lightweight unofficial floating mini-player for YouTube and YouTube Music.",
   "author": "hieudc",
   "main": "main.js",
@@ -12,7 +12,7 @@
     "dist": "electron-builder --win",
     "checksum": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/write-checksums.ps1",
     "release:win": "npm run check && npm run dist && npm run checksum",
-    "check": "node --check main.js && node --check main/local-server.js && node --check main/web-mode-manager.js && node --check main/window-manager.js && node --check main/ipc-handlers.js && node --check main/store-manager.js && node --check main/youtube-search.js && node --check main/global-shortcuts.js && node --check main/web-playback-backend.js && node --check main/ad-blocker.js && node --check main/embed-loudness.js && node --check main/tray-manager.js && node --check preload.cjs && node --check renderer/app.js && node --check renderer/player-controller.js && node --check renderer/queue-manager.js && node --check renderer/radio-autoplay.js && node --check renderer/search-ui.js && node --check renderer/favorites-ui.js && node --check renderer/playlists-ui.js && node --check renderer/error-handler.js && node --check renderer/ui-elements.js && node --check renderer/icons.js && node --check renderer/waveform.js && node --check renderer/format-utils.js && node --check renderer/track-scoring.js && node --check renderer/focus-mode.js && node --check renderer/playback-router.js && node --check renderer/resize-grip.js && node --check renderer/immersive-mode.js && node --check renderer/player-drag.js"
+    "check": "node --check main.js && node --check main/local-server.js && node --check main/web-mode-manager.js && node --check main/window-manager.js && node --check main/ipc-handlers.js && node --check main/store-manager.js && node --check main/youtube-search.js && node --check main/global-shortcuts.js && node --check main/web-playback-backend.js && node --check main/ad-blocker.js && node --check main/embed-loudness.js && node --check main/tray-manager.js && node --check preload.cjs && node --check renderer/app.js && node --check renderer/player-controller.js && node --check renderer/queue-manager.js && node --check renderer/radio-autoplay.js && node --check renderer/search-ui.js && node --check renderer/favorites-ui.js && node --check renderer/playlists-ui.js && node --check renderer/error-handler.js && node --check renderer/ui-elements.js && node --check renderer/icons.js && node --check renderer/waveform.js && node --check renderer/format-utils.js && node --check renderer/track-scoring.js && node --check renderer/focus-mode.js && node --check renderer/playback-router.js && node --check renderer/resize-grip.js && node --check renderer/immersive-mode.js && node --check renderer/player-drag.js && node --check renderer/about-dialog.js"
   },
   "license": "MIT",
   "build": {
