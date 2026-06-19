@@ -440,6 +440,7 @@ button svg, .icon svg {
   z-index: 50;
 }
 #about-box {
+  position: relative;
   width: 256px;
   display: flex;
   flex-direction: column;
@@ -503,15 +504,16 @@ button svg, .icon svg {
   margin-top: 2px;
 }
 #about-close {
-  margin-top: 10px;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
   height: 28px;
-  padding: 0 18px;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 600;
-  border-radius: 14px;
+  color: var(--fg-dim);
+  border-radius: 7px;
 }
-#about-close:hover { background: #8f90ee; }
+#about-close svg { width: 18px; height: 18px; }
+#about-close:hover { color: var(--fg); background: var(--bg-soft); }
 #about-kofi { background: #ff5e5b; } /* Ko-fi coral */
 #about-kofi:hover { background: #ff726f; }
 

@@ -7,10 +7,6 @@
 
 ![FloatWave — a floating mini-player for YouTube and YouTube Music](assets/hero.png)
 
-<p align="center">
-  <a href="https://ko-fi.com/hieudc"><img height="40" src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support FloatWave on Ko-fi" /></a>
-</p>
-
 FloatWave is a lightweight, unofficial floating mini-player for YouTube and
 YouTube Music on Windows. It is built with plain Electron and vanilla
 JavaScript, with no framework, no bundler, and no API key.

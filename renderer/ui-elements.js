@@ -97,6 +97,7 @@ export function applyStaticIcons() {
   // About-dialog link pills: icon + label
   els.aboutRepo.innerHTML = `${ICONS.github}<span>GitHub</span>`;
   els.aboutKofi.innerHTML = `${ICONS.coffee}<span>Buy me a coffee</span>`;
+  els.aboutClose.innerHTML = ICONS.close;
 }
 
 export function setPlayIcon(isPlaying) {
