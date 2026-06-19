@@ -19,6 +19,7 @@ export const els = {
   aboutAuthor: $('about-author'),
   aboutLicense: $('about-license'),
   aboutRepo: $('about-repo'),
+  aboutKofi: $('about-kofi'),
   aboutClose: $('about-close'),
   btnFocusMode: $('btn-focus-mode'),
   btnCinema: $('btn-cinema'),

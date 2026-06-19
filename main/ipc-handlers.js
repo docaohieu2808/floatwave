@@ -16,8 +16,9 @@ import { applyEmbedLoudness } from './embed-loudness.js';
 
 // Only allow opening canonical YouTube watch URLs externally
 const YT_WATCH_RE = /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}$/;
-// The project's own repo — the only non-watch URL the About dialog may open
+// Off-app links the About dialog may open in the system browser (allowlisted).
 const REPO_URL = 'https://github.com/docaohieu2808/floatwave';
+const KOFI_URL = 'https://ko-fi.com/hieudc';
 
 export function registerIpc(win) {
   // backend B (hidden music.youtube.com playback for embed-blocked tracks)
@@ -34,6 +35,7 @@ export function registerIpc(win) {
     author: 'hieudc',
     license: 'MIT',
     repo: REPO_URL,
+    kofi: KOFI_URL,
   }));
 
   ipcMain.handle('webplay:load', (_event, videoId, volume) => webPlayLoad(videoId, volume));
@@ -121,7 +123,7 @@ export function registerIpc(win) {
   });
 
   ipcMain.handle('app:open-external', (_event, url) => {
-    if (typeof url === 'string' && (YT_WATCH_RE.test(url) || url === REPO_URL)) {
+    if (typeof url === 'string' && (YT_WATCH_RE.test(url) || url === REPO_URL || url === KOFI_URL)) {
       shell.openExternal(url);
       return true;
     }

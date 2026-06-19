@@ -4,6 +4,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows-0078D6)
 ![Electron](https://img.shields.io/badge/Electron-41-47848F)
 ![No API key](https://img.shields.io/badge/API%20key-not%20required-success)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Buy%20me%20a%20coffee-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/hieudc)
 
 ![FloatWave — a floating mini-player for YouTube and YouTube Music](assets/hero.png)
 
@@ -23,6 +24,12 @@ with, endorsed by, or sponsored by YouTube, Google, or YouTube Music.
 Typical memory usage on the author's Windows test machine is around
 200-300 MB. Actual usage depends on Electron, Chromium, YouTube pages, playback
 mode, extensions, GPU state, and the current queue.
+
+## Support
+
+FloatWave is my **first open-source project** — free, and always will be. If it
+earned a spot on your screen, a coffee keeps it going (and nudges me to share
+more of what I build): **[ko-fi.com/hieudc](https://ko-fi.com/hieudc)** &#9749;
 
 ## Disclaimer
 

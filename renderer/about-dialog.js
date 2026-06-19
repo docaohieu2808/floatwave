@@ -15,12 +15,14 @@ function isOpen() {
 
 export async function initAbout() {
   let repoUrl = '';
+  let kofiUrl = '';
   try {
     const info = await window.api.getInfo();
     els.aboutVersion.textContent = `v${info.version}`;
     els.aboutAuthor.textContent = info.author;
     els.aboutLicense.textContent = info.license;
     repoUrl = info.repo || '';
+    kofiUrl = info.kofi || '';
   } catch {
     els.aboutVersion.textContent = '';
   }
@@ -35,6 +37,10 @@ export async function initAbout() {
   els.aboutRepo.addEventListener('click', (event) => {
     event.preventDefault();
     if (repoUrl) window.api.openExternal(repoUrl);
+  });
+  els.aboutKofi.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (kofiUrl) window.api.openExternal(kofiUrl);
   });
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && isOpen()) close();
