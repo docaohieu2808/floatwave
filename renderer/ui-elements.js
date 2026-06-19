@@ -94,6 +94,9 @@ export function applyStaticIcons() {
   // empty-state default — without this the heart only appears once a track
   // loads, leaving a blank circle on a fresh/cleared queue
   els.btnFavorite.innerHTML = ICONS.heart;
+  // About-dialog link pills: icon + label
+  els.aboutRepo.innerHTML = `${ICONS.github}<span>GitHub</span>`;
+  els.aboutKofi.innerHTML = `${ICONS.coffee}<span>Buy me a coffee</span>`;
 }
 
 export function setPlayIcon(isPlaying) {
