@@ -27,7 +27,9 @@ export function initPlayerDrag() {
     const startY = event.screenY;
     let dragging = false;
     let ended = false; // onEnd must run exactly once (pointerup + lostpointercapture both fire)
-    window.api.win.dragStart(); // main starts following the cursor
+    // A pure click must touch NO window API: repeatedly moving a frameless
+    // window drifts its content size, so we hand off to main ONLY once the
+    // pointer crosses the drag threshold — a real drag, never a click.
 
     const onMove = (moveEvent) => {
       if (
@@ -35,6 +37,7 @@ export function initPlayerDrag() {
         Math.hypot(moveEvent.screenX - startX, moveEvent.screenY - startY) > DRAG_THRESHOLD
       ) {
         dragging = true;
+        window.api.win.dragStart(); // real drag begins — main follows the cursor
       }
     };
     const onEnd = (endEvent) => {
@@ -49,10 +52,13 @@ export function initPlayerDrag() {
       } catch (_err) {
         /* capture already gone */
       }
-      window.api.win.dragEnd(); // ALWAYS tell main to stop following — never glue the window
-      if (dragging) return; // it was a drag, not a click
-      // A stale player ref must NOT throw past here: that would skip the
-      // double-click cinema-exit below and trap the user.
+      if (dragging) {
+        window.api.win.dragEnd(); // stop the window-follow we started on first move
+        return; // it was a drag, not a click
+      }
+      // A pure click — no window API was touched, so it can't drift the size.
+      // A stale player ref must NOT throw past here: it would skip the
+      // double-click cinema toggle below.
       try {
         player.toggle(); // a click → play/pause
       } catch (_err) {

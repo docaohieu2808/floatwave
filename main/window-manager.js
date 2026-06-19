@@ -219,11 +219,13 @@ export function setImmersive(on) {
 }
 
 // Drag-to-move from the video layer (#player-drag). The renderer only signals
-// start/end; MAIN follows the OS cursor itself (getCursorScreenPoint), which is
-// in the SAME DIP space as getBounds — so there's no renderer-screenX vs
-// window-DIP scaling mismatch (that mismatch made the window balloon / fly off
-// on a HiDPI display). Size is preserved explicitly; only x/y change, and the
-// cursor is hand-driven so moving the window can't feed back into the position.
+// start/end; MAIN follows the OS cursor itself (getCursorScreenPoint), in the
+// SAME DIP space as getPosition — no renderer-screenX vs window-DIP mismatch.
+// Uses setPosition (move ONLY), never getBounds/setBounds: on a frameless Win10
+// window those carry the invisible resize-border inset, so every
+// getBounds→setBounds round-trip drifts the CONTENT size. The drag ran one
+// round-trip per press, so each click quietly resized the window. Moving by
+// position alone can't touch the size.
 let dragTimer = null;
 // Hard ceiling on a single drag. If the renderer ever fails to send dragEnd
 // (capture lost without an up event, renderer hiccup), the window would stay
@@ -233,7 +235,7 @@ const DRAG_MAX_TICKS = Math.round(20000 / 16); // ~20s at the 16ms cadence
 export function beginWindowDrag() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   endWindowDrag();
-  const start = mainWindow.getBounds();
+  const start = mainWindow.getContentBounds();
   const cursorStart = screen.getCursorScreenPoint();
   let ticks = 0;
   dragTimer = setInterval(() => {
@@ -241,9 +243,14 @@ export function beginWindowDrag() {
       return endWindowDrag();
     }
     const c = screen.getCursorScreenPoint();
-    mainWindow.setBounds({
-      x: start.x + (c.x - cursorStart.x),
-      y: start.y + (c.y - cursorStart.y),
+    // CONTENT bounds with FIXED width/height. setBounds/setPosition work in OUTER
+    // bounds, whose frameless-Win10 resize-border inset makes every call drift
+    // the content size (+~2px); the 16ms drag loop turned that into visible
+    // growth on each press. setContentBounds pins the content size absolutely,
+    // so only x/y move — the size can't drift no matter how many ticks fire.
+    mainWindow.setContentBounds({
+      x: Math.round(start.x + (c.x - cursorStart.x)),
+      y: Math.round(start.y + (c.y - cursorStart.y)),
       width: start.width,
       height: start.height,
     });
