@@ -63,6 +63,12 @@ export function createMainWindow(pageUrl = lastPageUrl) {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      // This is an always-on-top player the user keeps visible but UNFOCUSED
+      // while working. Chromium throttles painting of unfocused windows, which on
+      // a frameless Win10 window can flash a stale/black frame over the chrome
+      // bars when focus/position changes (the rare "bars went black" glitch).
+      // Keep it painting full-rate so a refocus/move never shows a dead frame.
+      backgroundThrottling: false,
     },
   });
 

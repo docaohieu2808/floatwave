@@ -102,7 +102,7 @@ function bindTitlebar() {
   };
   els.btnWebMode.addEventListener('click', async () => {
     webMode = !webMode;
-    if (webMode) player.pause(); // two players must never sound at once
+    if (webMode) player.parkForWebMode(); // mini steps aside: quiet it AND stop it driving the queue
     await window.api.setMode(webMode ? 'web' : 'mini');
     renderWebModeButton();
   });
@@ -202,6 +202,7 @@ function bindPlayerEvents() {
     }
     if (state === player.STATE.CUED) syncMetadataFromPlayer();
     if (state === player.STATE.ENDED) {
+      if (webMode) return; // parked in web mode — the user's own window plays; don't drive the mini queue
       // queue exhausted (repeat off) → extend with radio and keep playing
       if (!queueManager.onEnded()) extendQueueWithRadio();
     }

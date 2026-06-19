@@ -11,6 +11,10 @@ import { getStore } from './store-manager.js';
 
 const APP_ICON = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'floatwave.ico');
 const WEB_SIZE = { width: 960, height: 640 };
+// Only these hosts (and their subdomains) may be handed to the system browser
+// from the YT Music window. A stray window.open('https://evil…') from a script
+// or ad must NOT launch the user's browser to an arbitrary site.
+const EXTERNAL_HOST_RE = /^([a-z0-9-]+\.)*(youtube\.com|youtu\.be|google\.com)$/i;
 
 // In-page ad killer for the YT Music window — runs in BOTH web mode (visible,
 // user-facing) and the hidden backend. The network ad-blocker can't stop video
@@ -39,6 +43,7 @@ const CHROME_UA =
 
 let webWindow = null;
 let miniWindow = null;
+let miniCleanupBound = false; // app-quit cleanup bound ONCE, not per window recreate
 // web-playback-backend installs this: true while the HIDDEN window is the
 // active audio backend — exiting web mode must then NOT pause the video.
 let playbackGuard = () => false;
@@ -108,6 +113,20 @@ function getWebWindow(miniWin) {
   if (webWindow && !webWindow.isDestroyed()) return webWindow;
   miniWindow = miniWin;
 
+  // Mini window closed = app quitting → release the web window for real. Bind
+  // ONCE: getWebWindow runs again after every idle-reclaim recreation, and the
+  // mini window does NOT close between cycles — re-binding here would pile up
+  // 'closed' listeners (MaxListenersExceededWarning after ~10 reclaims).
+  if (!miniCleanupBound) {
+    miniCleanupBound = true;
+    miniWin.once('closed', () => {
+      clearInterval(idleMonitor);
+      idleMonitor = null;
+      webWindow?.destroy();
+      webWindow = null;
+    });
+  }
+
   webWindow = new BrowserWindow({
     width: WEB_SIZE.width,
     height: WEB_SIZE.height,
@@ -132,7 +151,12 @@ function getWebWindow(miniWin) {
   session.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
   // target=_blank links inside YT Music go to the system browser, never new windows
   webWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https:\/\//.test(url)) shell.openExternal(url);
+    try {
+      const u = new URL(url);
+      if (u.protocol === 'https:' && EXTERNAL_HOST_RE.test(u.hostname)) shell.openExternal(url);
+    } catch {
+      // malformed URL — never open
+    }
     return { action: 'deny' };
   });
   webWindow.webContents.loadURL('https://music.youtube.com');
@@ -161,14 +185,6 @@ function getWebWindow(miniWin) {
       miniWindow.webContents.send('mode:exited');
     }
   });
-  // Mini window closed = app quitting → release the web window for real
-  miniWin.once('closed', () => {
-    clearInterval(idleMonitor);
-    idleMonitor = null;
-    webWindow?.destroy();
-    webWindow = null;
-  });
-
   idleSince = null; // fresh window: clear any stale idle countdown
   startIdleMonitor(); // begin watching this window for reclaim eligibility
   return webWindow;

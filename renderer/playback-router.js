@@ -90,6 +90,16 @@ export function isWebPlayback() {
   return mode === 'web';
 }
 
+// Entering the visible web-mode window: the mini player must step aside. If
+// backend B owns the current track it plays through the SAME window we're about
+// to show, so STOP its poll — left running it keeps advancing the mini queue
+// behind the user and can reload this very page on the next embed-blocked track.
+// If the iframe owns it, just pause it (it's in the mini window we hide).
+export function parkForWebMode() {
+  if (mode === 'web') window.api.webPlay.stop();
+  else iframePlayer.pause();
+}
+
 export function play() {
   if (mode !== 'web') return iframePlayer.play();
   if (webCuedId) {
