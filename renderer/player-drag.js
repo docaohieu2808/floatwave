@@ -26,6 +26,7 @@ export function initPlayerDrag() {
     const startX = event.screenX;
     const startY = event.screenY;
     let dragging = false;
+    let ended = false; // onEnd must run exactly once (pointerup + lostpointercapture both fire)
     window.api.win.dragStart(); // main starts following the cursor
 
     const onMove = (moveEvent) => {
@@ -37,17 +38,26 @@ export function initPlayerDrag() {
       }
     };
     const onEnd = (endEvent) => {
+      if (ended) return;
+      ended = true;
       layer.removeEventListener('pointermove', onMove);
       layer.removeEventListener('pointerup', onEnd);
       layer.removeEventListener('pointercancel', onEnd);
+      layer.removeEventListener('lostpointercapture', onEnd);
       try {
         layer.releasePointerCapture(endEvent.pointerId);
       } catch (_err) {
         /* capture already gone */
       }
-      window.api.win.dragEnd();
+      window.api.win.dragEnd(); // ALWAYS tell main to stop following — never glue the window
       if (dragging) return; // it was a drag, not a click
-      player.toggle(); // a click → play/pause
+      // A stale player ref must NOT throw past here: that would skip the
+      // double-click cinema-exit below and trap the user.
+      try {
+        player.toggle(); // a click → play/pause
+      } catch (_err) {
+        /* player not ready / reloaded — ignore, the gesture still counts */
+      }
       const now = endEvent.timeStamp;
       if (now - lastClickAt < DOUBLE_MS) {
         toggleImmersive(); // double-click → enter/exit cinema (the play toggles cancel out)
@@ -60,5 +70,9 @@ export function initPlayerDrag() {
     layer.addEventListener('pointermove', onMove);
     layer.addEventListener('pointerup', onEnd);
     layer.addEventListener('pointercancel', onEnd);
+    // If capture is lost without a pointerup/cancel (window slid away, element
+    // re-laid-out, focus stolen), still end the drag — otherwise main keeps
+    // dragging the window under the cursor forever (feels frozen).
+    layer.addEventListener('lostpointercapture', onEnd);
   });
 }

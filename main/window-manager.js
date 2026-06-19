@@ -219,13 +219,21 @@ export function setImmersive(on) {
 // on a HiDPI display). Size is preserved explicitly; only x/y change, and the
 // cursor is hand-driven so moving the window can't feed back into the position.
 let dragTimer = null;
+// Hard ceiling on a single drag. If the renderer ever fails to send dragEnd
+// (capture lost without an up event, renderer hiccup), the window would stay
+// glued to the cursor forever and feel frozen. A real move never lasts this
+// long, so auto-release is a safe last-resort.
+const DRAG_MAX_TICKS = Math.round(20000 / 16); // ~20s at the 16ms cadence
 export function beginWindowDrag() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   endWindowDrag();
   const start = mainWindow.getBounds();
   const cursorStart = screen.getCursorScreenPoint();
+  let ticks = 0;
   dragTimer = setInterval(() => {
-    if (!mainWindow || mainWindow.isDestroyed()) return endWindowDrag();
+    if (!mainWindow || mainWindow.isDestroyed() || ++ticks > DRAG_MAX_TICKS) {
+      return endWindowDrag();
+    }
     const c = screen.getCursorScreenPoint();
     mainWindow.setBounds({
       x: start.x + (c.x - cursorStart.x),
