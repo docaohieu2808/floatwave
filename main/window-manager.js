@@ -218,14 +218,21 @@ export function setImmersive(on) {
   });
 }
 
-// Drag-to-move from the video layer (#player-drag). The renderer only signals
-// start/end; MAIN follows the OS cursor itself (getCursorScreenPoint), in the
-// SAME DIP space as getPosition — no renderer-screenX vs window-DIP mismatch.
-// Uses setPosition (move ONLY), never getBounds/setBounds: on a frameless Win10
-// window those carry the invisible resize-border inset, so every
-// getBounds→setBounds round-trip drifts the CONTENT size. The drag ran one
-// round-trip per press, so each click quietly resized the window. Moving by
-// position alone can't touch the size.
+// The content size the window SHOULD have right now, computed from our own state
+// — NEVER read back from the OS. getContentBounds()/getBounds() drift ~1px per
+// call on this frameless Win10 window, so re-using the read-back as the drag's
+// pinned size let each drag start a pixel bigger than the last (slow growth).
+function intendedContentSize() {
+  if (isCompact) return { width: SIZES.compact.width, height: SIZES.compact.height };
+  if (immersive) return { width: normalSize.width, height: normalSize.height - CHROME_H };
+  return { width: normalSize.width, height: normalSize.height };
+}
+
+// Drag-to-move from the video layer (#player-drag). The renderer signals start
+// only after a real drag begins (never on a plain click). MAIN follows the OS
+// cursor (getCursorScreenPoint, same DIP space as the window) and moves via
+// setContentBounds, pinning width/height to intendedContentSize() so the size
+// stays exact no matter how many ticks fire or how many drags happen.
 let dragTimer = null;
 // Hard ceiling on a single drag. If the renderer ever fails to send dragEnd
 // (capture lost without an up event, renderer hiccup), the window would stay
@@ -235,7 +242,8 @@ const DRAG_MAX_TICKS = Math.round(20000 / 16); // ~20s at the 16ms cadence
 export function beginWindowDrag() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   endWindowDrag();
-  const start = mainWindow.getContentBounds();
+  const start = mainWindow.getContentBounds(); // x/y origin only — size comes from below
+  const size = intendedContentSize(); // exact intended size, never the drifted read-back
   const cursorStart = screen.getCursorScreenPoint();
   let ticks = 0;
   dragTimer = setInterval(() => {
@@ -243,16 +251,11 @@ export function beginWindowDrag() {
       return endWindowDrag();
     }
     const c = screen.getCursorScreenPoint();
-    // CONTENT bounds with FIXED width/height. setBounds/setPosition work in OUTER
-    // bounds, whose frameless-Win10 resize-border inset makes every call drift
-    // the content size (+~2px); the 16ms drag loop turned that into visible
-    // growth on each press. setContentBounds pins the content size absolutely,
-    // so only x/y move — the size can't drift no matter how many ticks fire.
     mainWindow.setContentBounds({
       x: Math.round(start.x + (c.x - cursorStart.x)),
       y: Math.round(start.y + (c.y - cursorStart.y)),
-      width: start.width,
-      height: start.height,
+      width: size.width,
+      height: size.height,
     });
   }, 16);
 }
