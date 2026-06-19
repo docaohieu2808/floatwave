@@ -15,6 +15,14 @@ import { startLocalServer } from './main/local-server.js';
 // lets media autoplay. Must be set before app is ready.
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
+// Windows black-chrome glitch (rare): Chromium's native window-occlusion
+// detection sometimes wrongly marks this frameless always-on-top window as
+// occluded — on a focus change, or when another window briefly overlaps — and
+// stops compositing the PAGE surface, so the title/search/control bars render
+// solid BLACK while the video (on its own hardware overlay) keeps showing.
+// Disabling the occlusion calculation is the documented fix. Before app ready.
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
+
 // Single instance: relaunching the exe (common when it's hidden in the tray)
 // must surface the existing window instead of spawning a second FloatWave.
 if (!app.requestSingleInstanceLock()) {
