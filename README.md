@@ -4,9 +4,12 @@
 ![Platform](https://img.shields.io/badge/platform-Windows-0078D6)
 ![Electron](https://img.shields.io/badge/Electron-41-47848F)
 ![No API key](https://img.shields.io/badge/API%20key-not%20required-success)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Buy%20me%20a%20coffee-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/hieudc)
 
 ![FloatWave — a floating mini-player for YouTube and YouTube Music](assets/hero.png)
+
+<p align="center">
+  <a href="https://ko-fi.com/hieudc"><img height="40" src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support FloatWave on Ko-fi" /></a>
+</p>
 
 FloatWave is a lightweight, unofficial floating mini-player for YouTube and
 YouTube Music on Windows. It is built with plain Electron and vanilla
@@ -29,7 +32,11 @@ mode, extensions, GPU state, and the current queue.
 
 FloatWave is my **first open-source project** — free, and always will be. If it
 earned a spot on your screen, a coffee keeps it going (and nudges me to share
-more of what I build): **[ko-fi.com/hieudc](https://ko-fi.com/hieudc)** &#9749;
+more of what I build):
+
+<p align="center">
+  <a href="https://ko-fi.com/hieudc"><img height="44" src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Buy me a coffee at ko-fi.com" /></a>
+</p>
 
 ## Disclaimer
 
