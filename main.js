@@ -23,6 +23,15 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 // Disabling the occlusion calculation is the documented fix. Before app ready.
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
+// ...and that switch wasn't enough. On some GPUs the video gets promoted to a
+// hardware overlay plane while the window's own frameless surface stops
+// compositing, leaving the title/search/control bars solid BLACK even while the
+// video keeps playing (persistent, not just a flash). Compositing the WHOLE
+// window in software — one path, no hardware overlays — makes that class of
+// glitch impossible. Trade-off: video decodes on the CPU, which is fine for a
+// mostly-music mini-player. Must be set before app is ready.
+app.disableHardwareAcceleration();
+
 // Single instance: relaunching the exe (common when it's hidden in the tray)
 // must surface the existing window instead of spawning a second FloatWave.
 if (!app.requestSingleInstanceLock()) {
