@@ -58,6 +58,8 @@ with YouTube Premium).
 - Minimize-to-tray support. The minimize button hides the window; the close
   button quits the app.
 - Focus mode: compact 340x116 titlebar-and-controls view, persisted.
+- Sleep timer: fade out and pause after 5-60 minutes or at the end of the
+  current track — for falling asleep to music.
 - Music / Video search mode. Music mode targets YouTube Music song results;
   Video mode targets normal YouTube video results. Pasted YouTube links are also
   supported.

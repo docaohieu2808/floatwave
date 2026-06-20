@@ -16,6 +16,7 @@ import { initResizeGrip } from './resize-grip.js';
 import { initImmersive } from './immersive-mode.js';
 import { initPlayerDrag } from './player-drag.js';
 import { initAbout } from './about-dialog.js';
+import { initSleepTimer, consumeEndOfTrack } from './sleep-timer.js';
 import { applyWaveformMask } from './waveform.js';
 import { formatTime } from './format-utils.js';
 import {
@@ -204,6 +205,7 @@ function bindPlayerEvents() {
     if (state === player.STATE.CUED) syncMetadataFromPlayer();
     if (state === player.STATE.ENDED) {
       if (webMode) return; // parked in web mode — the user's own window plays; don't drive the mini queue
+      if (consumeEndOfTrack()) return; // sleep timer "end of track" — stop here, don't advance
       // queue exhausted (repeat off) → extend with radio and keep playing
       if (!queueManager.onEnded()) extendQueueWithRadio();
     }
@@ -339,6 +341,7 @@ function boot() {
   initImmersive();
   initPlayerDrag();
   initAbout();
+  initSleepTimer();
   // re-render the waveform at the new pitch when the window is resized so the
   // bars stay fine/even at any size (mask would otherwise just stretch)
   let waveRaf = 0;

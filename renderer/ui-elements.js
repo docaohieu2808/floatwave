@@ -22,6 +22,8 @@ export const els = {
   aboutKofi: $('about-kofi'),
   aboutClose: $('about-close'),
   btnFocusMode: $('btn-focus-mode'),
+  btnSleep: $('btn-sleep'),
+  sleepMenu: $('sleep-menu'),
   resizeGripLeft: $('resize-grip-left'),
   resizeGripRight: $('resize-grip-right'),
   btnSearchMode: $('btn-search-mode'),
@@ -80,6 +82,7 @@ export function setRangeFill(rangeEl, percent) {
 export function applyStaticIcons() {
   els.btnPin.innerHTML = ICONS.pin;
   els.btnFocusMode.innerHTML = ICONS.collapse;
+  els.btnSleep.innerHTML = ICONS.timer;
   els.btnWebMode.innerHTML = ICONS.musicNote;
   els.btnPanel.innerHTML = ICONS.queueList;
   els.btnInfo.innerHTML = ICONS.info;
