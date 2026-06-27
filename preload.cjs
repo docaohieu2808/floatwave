@@ -28,6 +28,12 @@ contextBridge.exposeInMainWorld('api', {
   },
   onWebPlayStatus: (callback) =>
     ipcRenderer.on('webplay:status', (_event, status) => callback(status)),
+  // auto-update: status stream from main + user-driven install/check
+  update: {
+    onStatus: (callback) => ipcRenderer.on('update:status', (_event, status) => callback(status)),
+    install: () => ipcRenderer.invoke('update:install'),
+    check: () => ipcRenderer.invoke('update:check'),
+  },
   win: {
     minimize: () => ipcRenderer.invoke('win:minimize'),
     close: () => ipcRenderer.invoke('win:close'),

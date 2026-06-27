@@ -7,6 +7,7 @@ import { initAdBlocker } from './main/ad-blocker.js';
 import { initTray } from './main/tray-manager.js';
 import { getStore } from './main/store-manager.js';
 import { startLocalServer } from './main/local-server.js';
+import { initAutoUpdater } from './main/auto-updater.js';
 
 // Audio must start without a user gesture: the embed-loudness Web Audio graph
 // creates an AudioContext in the iframe via executeJavaScript (no gesture), and
@@ -53,6 +54,7 @@ if (!app.requestSingleInstanceLock()) {
     registerIpc(win);
     registerGlobalShortcuts(win);
     initTray(win); // minimize hides to the tray; tray icon restores
+    initAutoUpdater(win); // background check/download of newer GitHub releases
   });
 
   app.on('window-all-closed', () => {

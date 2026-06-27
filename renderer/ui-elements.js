@@ -58,6 +58,10 @@ export const els = {
   volume: $('volume'),
   btnFavorite: $('btn-favorite'),
   btnDislike: $('btn-dislike'),
+  updateToast: $('update-toast'),
+  updateText: $('update-text'),
+  updateInstall: $('update-install'),
+  updateDismiss: $('update-dismiss'),
 };
 
 export function setTrackInfo(title, artist) {

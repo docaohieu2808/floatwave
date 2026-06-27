@@ -9,8 +9,8 @@ if (-not (Test-Path $dist)) {
 }
 
 $targets = @(
-  "FloatWave Setup *.exe",
-  "FloatWave Setup *.exe.blockmap",
+  "FloatWave-Setup-*.exe",
+  "FloatWave-Setup-*.exe.blockmap",
   "latest.yml"
 )
 
