@@ -94,21 +94,24 @@ export function isWebPlayback() {
   return mode === 'web';
 }
 
-// Entering the visible web-mode window: the mini player must step aside. If
-// backend B owns the current track it plays through the SAME window we're about
-// to show, so STOP its poll — left running it keeps advancing the mini queue
-// behind the user and can reload this very page on the next embed-blocked track.
-// If the iframe owns it, just pause it (it's in the mini window we hide).
+// Entering the visible web-mode window: the mini player steps aside. If backend
+// B owns the track it plays through the SAME window we're about to show, so just
+// SUSPEND its poll — the <video> keeps sounding, only the queue-driving +
+// near-end pre-empt pause while the user controls the visible window. If the
+// iframe owns it, pause it (it's in the mini window we hide; one source sounds).
 export function parkForWebMode() {
-  if (mode === 'web') {
-    window.api.webPlay.stop(); // stop poll + pause + deactivate backend B
-    // Backend B is now torn down, but leaving web mode must NOT leave the mini
-    // Play button dead: re-cue this track so play()/toggle() reloads it (the
-    // hidden window may also be idle-freed by the time the user comes back).
-    webCuedId = webPlayingId;
-  } else {
-    iframePlayer.pause();
-  }
+  if (mode === 'web') window.api.webPlay.suspend();
+  else iframePlayer.pause();
+}
+
+// Returning to the mini player from web mode. Backend B never stopped (only its
+// poll was suspended) — re-attach the poll so ticks + end-detection resume
+// mid-song, no Play press needed. If the hidden window died while in web mode,
+// re-cue the track so the next Play reloads it instead of no-opping.
+// (iframe tracks were paused on enter and stay user-controlled — unchanged.)
+export function resumeFromWebMode() {
+  if (mode !== 'web') return;
+  window.api.webPlay.resume().then((ok) => { if (!ok) webCuedId = webPlayingId; });
 }
 
 export function play() {

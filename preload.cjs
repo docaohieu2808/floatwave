@@ -22,6 +22,9 @@ contextBridge.exposeInMainWorld('api', {
     load: (videoId, volume) => ipcRenderer.invoke('webplay:load', videoId, volume),
     control: (action, value) => ipcRenderer.invoke('webplay:control', action, value),
     stop: () => ipcRenderer.invoke('webplay:stop'),
+    // web-mode toggle: keep the song playing across show/hide of the web window
+    suspend: () => ipcRenderer.invoke('webplay:suspend'),
+    resume: () => ipcRenderer.invoke('webplay:resume'),
   },
   onWebPlayStatus: (callback) =>
     ipcRenderer.on('webplay:status', (_event, status) => callback(status)),

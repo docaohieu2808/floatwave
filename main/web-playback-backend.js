@@ -139,3 +139,24 @@ export function stopWebPlayback() {
   active = false;
   targetId = null;
 }
+
+// Web mode shows the SAME hidden window that's already sounding. Suspend ONLY
+// the poll (which drives the mini queue and pre-empts a pause near the track
+// end) so the user's now-visible video plays through untouched — active,
+// targetId and the window stay, so the audio never stops.
+export function suspendWebPlayback() {
+  clearInterval(pollTimer);
+  pollTimer = null;
+}
+
+// Back to the mini player: re-attach the poll on the still-playing window so
+// ticks + end-detection resume mid-song with no reload (position preserved).
+// Returns false when there's nothing live to resume (e.g. the hidden window
+// died while in web mode) — the caller then falls back to reload-on-Play.
+export function resumeWebPlayback() {
+  if (!active || !targetId) return false;
+  const webWin = getWebWindow?.(); // existing window only — never created here
+  if (!webWin) return false;
+  startPolling(webWin);
+  return true;
+}

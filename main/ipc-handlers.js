@@ -8,6 +8,7 @@ import {
 } from './web-mode-manager.js';
 import {
   initWebPlayback, isWebPlaybackActive, webPlayLoad, webPlayControl, stopWebPlayback,
+  suspendWebPlayback, resumeWebPlayback,
 } from './web-playback-backend.js';
 import {
   setCompactMode, resetSize, resizeVideo, setImmersive, beginWindowDrag, endWindowDrag,
@@ -44,6 +45,14 @@ export function registerIpc(win) {
     stopWebPlayback();
     return true;
   });
+
+  // Web mode toggle: suspend keeps the song playing (poll off only); resume
+  // re-attaches the poll on return so playback stays seamless without a Play press.
+  ipcMain.handle('webplay:suspend', () => {
+    suspendWebPlayback();
+    return true;
+  });
+  ipcMain.handle('webplay:resume', () => resumeWebPlayback());
 
   ipcMain.handle('win:minimize', () => {
     // Minimize-to-tray: hide the window (removes its taskbar button) and let the

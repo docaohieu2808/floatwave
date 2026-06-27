@@ -110,6 +110,7 @@ function bindTitlebar() {
   });
   window.api.onModeExited(() => {
     webMode = false;
+    player.resumeFromWebMode(); // keep the song playing on return — no manual Play
     renderWebModeButton();
   });
   els.btnPanel.addEventListener('click', () => {
