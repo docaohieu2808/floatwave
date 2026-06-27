@@ -17,6 +17,8 @@ let webOnlyIds = new Set();
 let webStatus = { current: 0, duration: 0 }; // last poll from the hidden window
 let lastWebState = null; // dedupe statechange emissions from the 1s status stream
 let webCuedId = null; // web track restored on boot — only starts on explicit play
+let webPlayingId = null; // id currently routed to backend B — lets play()/toggle()
+                         // re-arm it after a park or idle-free tore the backend down
 let lastVolume = 50; // mini slider 0-100; web backend wants 0..1 at load time
 
 export function on(event, handler) {
@@ -62,6 +64,7 @@ function startWeb(videoId, { autoplay = true } = {}) {
   mode = 'web';
   lastWebState = null;
   webStatus = { current: 0, duration: 0 };
+  webPlayingId = videoId; // remember which track backend B owns (for re-arm)
   if (autoplay) {
     webCuedId = null;
     window.api.webPlay.load(videoId, lastVolume / 100);
@@ -75,6 +78,7 @@ export function load(videoId, { autoplay = true } = {}) {
   if (mode === 'web') window.api.webPlay.stop();
   mode = 'iframe';
   webCuedId = null;
+  webPlayingId = null;
   iframePlayer.load(videoId, { autoplay });
 }
 
@@ -96,8 +100,15 @@ export function isWebPlayback() {
 // behind the user and can reload this very page on the next embed-blocked track.
 // If the iframe owns it, just pause it (it's in the mini window we hide).
 export function parkForWebMode() {
-  if (mode === 'web') window.api.webPlay.stop();
-  else iframePlayer.pause();
+  if (mode === 'web') {
+    window.api.webPlay.stop(); // stop poll + pause + deactivate backend B
+    // Backend B is now torn down, but leaving web mode must NOT leave the mini
+    // Play button dead: re-cue this track so play()/toggle() reloads it (the
+    // hidden window may also be idle-freed by the time the user comes back).
+    webCuedId = webPlayingId;
+  } else {
+    iframePlayer.pause();
+  }
 }
 
 export function play() {
